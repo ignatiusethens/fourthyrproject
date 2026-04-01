@@ -80,15 +80,41 @@
         </div>
         
         <div class="form-group">
-            <label for="interests">Primary Area of Interest</label>
+            <label for="interests">Preferred Broad Career Path</label>
             <select id="interests" name="interests" required>
-                <option value="{{interests}}">{{interests}}</option>
+                <option value="">Select Path</option>
                 <option value="STEM">Science, Technology, Engineering, Mathematics</option>
                 <option value="Arts_Sports">Arts & Sports Science</option>
                 <option value="Social_Sciences">Social Sciences</option>
             </select>
         </div>
+
+        <div class="form-group">
+            <label for="personality">How would you describe your personality?</label>
+            <select id="personality" name="personality" required>
+                <option value="">Select Personality Type</option>
+                <option value="Realistic">Realistic (Practical, hands-on)</option>
+                <option value="Investigative">Investigative (Analytical, intellectual)</option>
+                <option value="Artistic">Artistic (Creative, original)</option>
+                <option value="Social">Social (Helping, supporting others)</option>
+                <option value="Enterprising">Enterprising (Leading, persuading)</option>
+                <option value="Conventional">Conventional (Detail-oriented, organizing)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="hobby">What is your favorite hobby/activity?</label>
+            <select id="hobby" name="hobby" required>
+                <option value="">Select Favorite Hobby</option>
+                <option value="Building things">Building or fixing things</option>
+                <option value="Problem solving">Solving puzzles or logical problems</option>
+                <option value="Creating art">Creating art, music, or writing</option>
+                <option value="Helping others">Volunteering and helping others</option>
+                <option value="Leading">Organizing events or leading teams</option>
+                <option value="Organized tasks">Working with data or organizing information</option>
+            </select>
+        </div>
         
-        <button type="submit" class="btn-primary" style="width: 100%;">Update Profile</button>
+        <button type="submit" class="btn-primary" style="width: 100%;">Generate Recommendations</button>
     </form>
 </div>
