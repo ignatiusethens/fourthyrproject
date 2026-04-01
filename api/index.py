@@ -6,8 +6,10 @@ import os
 try:
     import libsql_experimental
     LIBSQL_AVAILABLE = True
-except ImportError:
+    LIBSQL_ERROR = ""
+except Exception as e:
     LIBSQL_AVAILABLE = False
+    LIBSQL_ERROR = str(e)
 
 import hashlib
 from http import cookies
@@ -390,7 +392,9 @@ class handler(http.server.BaseHTTPRequestHandler):
             elif 'msg' in query and query['msg'][0] == 'edited':
                  ctx['alert'] = '<div class="alert alert-success">Scholarship Updated!</div>'
             elif 'msg' in query and query['msg'][0] == 'vercel_error':
-                 ctx['alert'] = '<div class="alert alert-error">Cannot deploy changes on Vercel Read-Only File System.</div>'
+                 turso_url = os.getenv("TURSO_DATABASE_URL")
+                 debug = f"LIBSQL={LIBSQL_AVAILABLE} / URL_SET={'YES' if turso_url else 'NO'} / ERR={LIBSQL_ERROR}"
+                 ctx['alert'] = f'<div class="alert alert-error">Data Error: {debug}</div>'
                  
             self.send_html(self.render_template('admin.html', ctx))
             
