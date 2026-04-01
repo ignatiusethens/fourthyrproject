@@ -3,6 +3,12 @@ import sqlite3
 import urllib.parse
 import uuid
 import os
+try:
+    import libsql_experimental
+    LIBSQL_AVAILABLE = True
+except ImportError:
+    LIBSQL_AVAILABLE = False
+
 import hashlib
 from http import cookies
 
@@ -11,10 +17,16 @@ DATABASE = os.path.join(BASE_DIR, "database.db")
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
+# Connect to Turso Cloud DB if credentials exist, otherwise local SQLite
 def get_db_connection():
-    # Because Vercel file system is read-only, attempting to write will error unless we are local,
-    # but we just connect as usual. sqlite will create if it can.
-    conn = sqlite3.connect(DATABASE)
+    turso_url = os.getenv("TURSO_DATABASE_URL")
+    turso_token = os.getenv("TURSO_AUTH_TOKEN")
+    
+    if turso_url and turso_token and LIBSQL_AVAILABLE:
+        conn = libsql_experimental.connect(turso_url, auth_token=turso_token)
+    else:
+        conn = sqlite3.connect(DATABASE)
+        
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -171,55 +183,131 @@ class handler(http.server.BaseHTTPRequestHandler):
             math = user['math_grade']
             sciences = user['sciences_grade']
             interests = user['interests']
+            grade_map = {'A':12, 'A-':11, 'B+':10, 'B':9, 'B-':8, 'C+':7, 'C':6, 'C-':5, 'D+':4, 'D':3, 'D-':2, 'E':1}
+            def map_grade(g): return grade_map.get(g, 0)
             
             recs = ""
-            if not math or not sciences:
+            level_msg = ""
+            if not math or not sciences or math == 'Select Grade':
                 recs = "<p style='text-align:center;'>Please update your profile to see recommendations.</p>"
+                mean_grade = 0
             else:
-                if interests == 'STEM' and (math in ['A','A-','B+','B'] and sciences in ['A','A-','B+','B']):
-                    recs += """
-                        <div class="card card-green">
-                            <h3>BSc. Computer Science</h3>
-                            <p>University Level Degree focusing on software development and algorithm design.</p>
-                            <span class="badge badge-green">Recommended</span>
-                        </div>
-                        <div class="card card-red">
-                            <h3>BSc. Medicine & Surgery</h3>
-                            <p>For students with exceptional grades in Biology and Chemistry.</p>
-                            <span class="badge badge-green">Recommended</span>
-                        </div>
-                    """
-                elif interests == 'Social_Sciences':
-                    recs += """
-                        <div class="card card-black">
-                            <h3>BA. Law (LLB)</h3>
-                            <p>University Level Degree focusing on the Kenyan Legal System.</p>
-                        </div>
-                        <div class="card card-red">
-                            <h3>BA. Economics</h3>
-                            <p>For students strong in Humanities and Mathematics.</p>
-                        </div>
-                    """
-                else:
-                    recs += """
-                        <div class="card card-green">
-                            <h3>Diploma in Business Information Technology</h3>
-                            <p>TVET level course offering hands on IT and Business skills.</p>
-                        </div>
-                        <div class="card card-black">
-                            <h3>Artisan in Plumbing / Electricals</h3>
-                            <p>Highly demanded technical skills through local TVETs.</p>
-                        </div>
-                    """
-                    
+                total_pts = map_grade(math) + map_grade(sciences) + map_grade(user['english_grade']) + map_grade(user['humanities_grade'])
+                mean_grade = total_pts / 4.0
+                
+                # Determine qualification level
+                if mean_grade >= 7.0: # C+ and above: Degree level
+                    level_msg = "<div class='alert alert-success' style='text-align:center;'><strong>Qualification: Degree Level</strong><br>You have attained the minimum university entry grade.</div>"
+                    if interests == 'STEM':
+                        recs += """
+                            <div class="card card-green">
+                                <h3>BSc. in Computer Science / IT</h3>
+                                <p>Degree focusing on software development and algorithm design.</p>
+                                <span class="badge badge-green">Recommended</span>
+                            </div>
+                            <div class="card card-red">
+                                <h3>BSc. in Medicine / Nursing / Pharmacy</h3>
+                                <p>Medical sciences degree for students with high grades in Biology and Chemistry.</p>
+                                <span class="badge badge-green">Recommended</span>
+                            </div>
+                            <div class="card card-black">
+                                <h3>BSc. in Engineering (Civil/Mechanical/Electrical)</h3>
+                                <p>For students with exceptional Mathematics and Physics capabilities.</p>
+                                <span class="badge badge-green">Recommended</span>
+                            </div>
+                        """
+                    elif interests == 'Social_Sciences':
+                        recs += """
+                            <div class="card card-black">
+                                <h3>Bachelor of Laws (LLB)</h3>
+                                <p>Degree focusing on Legal Systems, Governance, and Justice.</p>
+                            </div>
+                            <div class="card card-red">
+                                <h3>Bachelor of Commerce / Economics</h3>
+                                <p>For students strong in business, accounting, and financial analysis.</p>
+                            </div>
+                            <div class="card card-green">
+                                <h3>Bachelor of Education (Arts/Science)</h3>
+                                <p>Prepares you for a teaching and educational administration career.</p>
+                            </div>
+                        """
+                    else: # Arts_Sports
+                        recs += """
+                            <div class="card card-green">
+                                <h3>BA. in Graphic Design / Fine Arts</h3>
+                                <p>University degree emphasizing creative media and visual arts.</p>
+                            </div>
+                            <div class="card card-red">
+                                <h3>BSc. in Sports Science</h3>
+                                <p>Focuses on human physiology, athletic performance, and sports management.</p>
+                            </div>
+                        """
+                elif mean_grade >= 5.0: # C- to C: Diploma level
+                    level_msg = "<div class='alert alert-success' style='text-align:center; background-color: #fff3e0; color: #e65100; border-color: #ffe0b2;'><strong>Qualification: Diploma Level</strong><br>You qualify for TVET Diploma courses.</div>"
+                    if interests == 'STEM':
+                        recs += """
+                            <div class="card card-green">
+                                <h3>Diploma in Information Technology</h3>
+                                <p>Hands-on IT networking, support, and basic development skills.</p>
+                            </div>
+                            <div class="card card-red">
+                                <h3>Diploma in Clinical Medicine / Pharmacy Tech</h3>
+                                <p>Mid-level pathway into healthcare and clinical services.</p>
+                            </div>
+                        """
+                    elif interests == 'Social_Sciences':
+                        recs += """
+                            <div class="card card-black">
+                                <h3>Diploma in Business Management</h3>
+                                <p>Foundational business, HR, and accounting principles.</p>
+                            </div>
+                            <div class="card card-green">
+                                <h3>Diploma in Social Work & Community Development</h3>
+                                <p>A pathway to NGO, community service, and governmental social roles.</p>
+                            </div>
+                        """
+                    else:
+                        recs += """
+                            <div class="card card-red">
+                                <h3>Diploma in Journalism & Mass Media</h3>
+                                <p>Media production, reporting, and broadcasting skills.</p>
+                            </div>
+                        """
+                else: # D+ and below: Artisan/Certificate level
+                    level_msg = "<div class='alert alert-success' style='text-align:center; background-color: #e1f5fe; color: #0277bd; border-color: #b3e5fc;'><strong>Qualification: Certificate/Artisan Level</strong><br>You qualify for high-demand technical TVET Certificate courses.</div>"
+                    if interests == 'STEM':
+                        recs += """
+                            <div class="card card-black">
+                                <h3>Artisan in Plumbing / Electrical Wiring</h3>
+                                <p>Highly demanded technical skills for the construction industry.</p>
+                            </div>
+                            <div class="card card-green">
+                                <h3>Certificate in ICT</h3>
+                                <p>Basic computer operation and technician qualifications.</p>
+                            </div>
+                        """
+                    else:
+                        recs += """
+                            <div class="card card-red">
+                                <h3>Certificate in Catering & Hospitality</h3>
+                                <p>Skills for the hotel, tourism, and food service industry.</p>
+                            </div>
+                            <div class="card card-black">
+                                <h3>Artisan in Tailoring & Dressmaking</h3>
+                                <p>Creative technical pathway into fashion and textiles.</p>
+                            </div>
+                        """
+            
             ctx = {
                 'title': 'Recommendations',
                 'recommendations_list': recs,
+                'level_msg': level_msg,
                 'math_grade': math or '-',
                 'english_grade': user['english_grade'] or '-',
                 'sciences_grade': sciences or '-',
                 'humanities_grade': user['humanities_grade'] or '-',
-                'interests': interests or '-'
+                'interests': interests or '-',
+                'mean_grade': f"{mean_grade:.2f}" if math and math != 'Select Grade' else '-'
             }
             self.send_html(self.render_template('recommendations.html', ctx))
             
@@ -263,9 +351,14 @@ class handler(http.server.BaseHTTPRequestHandler):
             try:
                 conn = get_db_connection()
                 scholarships = conn.execute("SELECT * FROM scholarships").fetchall()
+                total_users = conn.execute("SELECT COUNT(id) FROM users").fetchone()[0]
+                stem_users = conn.execute("SELECT COUNT(id) FROM users WHERE interests='STEM'").fetchone()[0]
+                arts_users = conn.execute("SELECT COUNT(id) FROM users WHERE interests='Arts_Sports'").fetchone()[0]
+                social_users = conn.execute("SELECT COUNT(id) FROM users WHERE interests='Social_Sciences'").fetchone()[0]
                 conn.close()
             except sqlite3.OperationalError:
                 scholarships = []
+                total_users = stem_users = arts_users = social_users = 0
             
             t_html = ""
             for s in scholarships:
@@ -275,15 +368,27 @@ class handler(http.server.BaseHTTPRequestHandler):
                         <td>{s['name']}</td>
                         <td>{s['provider']}</td>
                         <td>{s['deadline']}</td>
-                        <td><a href="/admin/delete_scholarship?id={s['id']}" style="color:var(--color-red);">Delete</a></td>
+                        <td>
+                            <a href="/admin/edit_scholarship?id={s['id']}" style="color:var(--color-green); margin-right:1rem;">Edit</a>
+                            <a href="/admin/delete_scholarship?id={s['id']}" style="color:var(--color-red);">Delete</a>
+                        </td>
                     </tr>
                 """
                 
-            ctx = {'title': 'Admin Dashboard', 'scholarships_table': t_html}
+            ctx = {
+                'title': 'Admin Dashboard', 
+                'scholarships_table': t_html,
+                'total_users': total_users,
+                'stem_users': stem_users,
+                'arts_users': arts_users,
+                'social_users': social_users
+            }
             if 'msg' in query and query['msg'][0] == 'added':
                  ctx['alert'] = '<div class="alert alert-success">Scholarship Added!</div>'
             elif 'msg' in query and query['msg'][0] == 'deleted':
                  ctx['alert'] = '<div class="alert alert-success">Scholarship Deleted!</div>'
+            elif 'msg' in query and query['msg'][0] == 'edited':
+                 ctx['alert'] = '<div class="alert alert-success">Scholarship Updated!</div>'
             elif 'msg' in query and query['msg'][0] == 'vercel_error':
                  ctx['alert'] = '<div class="alert alert-error">Cannot deploy changes on Vercel Read-Only File System.</div>'
                  
@@ -305,6 +410,35 @@ class handler(http.server.BaseHTTPRequestHandler):
                     self.send_redirect('/admin?msg=vercel_error')
             else:
                 self.send_redirect('/admin')
+                
+        elif path == '/admin/edit_scholarship':
+            if not user or user['is_admin'] != 1:
+                return self.send_error(403, "Forbidden")
+                
+            s_id = query.get('id', [''])[0]
+            if not s_id:
+                return self.send_redirect('/admin')
+                
+            try:
+                conn = get_db_connection()
+                s = conn.execute("SELECT * FROM scholarships WHERE id = ?", (s_id,)).fetchone()
+                conn.close()
+                if not s:
+                    return self.send_redirect('/admin')
+                    
+                ctx = {
+                    'title': 'Edit Scholarship',
+                    'id': s['id'],
+                    'name': s['name'],
+                    'provider': s['provider'],
+                    'description': s['description'],
+                    'eligibility_criteria': s['eligibility_criteria'],
+                    'deadline': s['deadline'],
+                    'link': s['link']
+                }
+                self.send_html(self.render_template('edit_scholarship.html', ctx))
+            except sqlite3.OperationalError:
+                self.send_redirect('/admin?msg=vercel_error')
             
         else:
             self.send_error(404, "Page Not Found")
@@ -419,6 +553,28 @@ class handler(http.server.BaseHTTPRequestHandler):
                 conn.commit()
                 conn.close()
                 self.send_redirect('/admin?msg=added')
+            except sqlite3.OperationalError:
+                 self.send_redirect('/admin?msg=vercel_error')
+                 
+        elif path == '/admin/edit_scholarship':
+            user = self.get_current_user()
+            if not user or user['is_admin'] != 1:
+                return self.send_error(403, "Forbidden")
+                
+            s_id = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query).get('id', [''])[0]
+            if not s_id:
+                return self.send_redirect('/admin')
+                
+            try:
+                conn = get_db_connection()
+                conn.execute("""
+                    UPDATE scholarships 
+                    SET name=?, provider=?, description=?, eligibility_criteria=?, deadline=?, link=?
+                    WHERE id=?
+                """, (get_val('name'), get_val('provider'), get_val('description'), get_val('eligibility_criteria'), get_val('deadline'), get_val('link'), s_id))
+                conn.commit()
+                conn.close()
+                self.send_redirect('/admin?msg=edited')
             except sqlite3.OperationalError:
                  self.send_redirect('/admin?msg=vercel_error')
             

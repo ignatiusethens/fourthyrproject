@@ -3,6 +3,25 @@
     <p>Manage the dynamic databases for scholarships and careers.</p>
 </div>
 
+<div class="grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 2rem; gap: 1rem;">
+    <div class="card" style="padding: 1.5rem; text-align: center;">
+        <h4 style="color: var(--text-muted); font-size: 0.9rem;">Total Users</h4>
+        <div style="font-size: 2rem; font-weight: 800; color: var(--color-black);">{{total_users}}</div>
+    </div>
+    <div class="card" style="padding: 1.5rem; text-align: center;">
+        <h4 style="color: var(--text-muted); font-size: 0.9rem;">STEM Interest</h4>
+        <div style="font-size: 2rem; font-weight: 800; color: var(--color-green);">{{stem_users}}</div>
+    </div>
+    <div class="card" style="padding: 1.5rem; text-align: center;">
+        <h4 style="color: var(--text-muted); font-size: 0.9rem;">Arts/Sports</h4>
+        <div style="font-size: 2rem; font-weight: 800; color: var(--color-red);">{{arts_users}}</div>
+    </div>
+    <div class="card" style="padding: 1.5rem; text-align: center;">
+        <h4 style="color: var(--text-muted); font-size: 0.9rem;">Social Sciences</h4>
+        <div style="font-size: 2rem; font-weight: 800; color: var(--color-black);">{{social_users}}</div>
+    </div>
+</div>
+
 {{alert}}
 
 <div class="grid" style="grid-template-columns: 1fr;">
