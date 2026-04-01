@@ -327,151 +327,130 @@ class handler(http.server.BaseHTTPRequestHandler):
                 }))
 
         elif path == '/profile':
-            math = get_val('math_grade')
-            eng = get_val('english_grade')
-            sci = get_val('sciences_grade')
-            hum = get_val('humanities_grade')
-            ints = get_val('interests')
-            personality = get_val('personality')
-            hobby = get_val('hobby')
+            user_inputs = {
+                'math_grade': get_val('math_grade'),
+                'english_grade': get_val('english_grade'),
+                'kiswahili_grade': get_val('kiswahili_grade'),
+                'biology_grade': get_val('biology_grade'),
+                'chemistry_grade': get_val('chemistry_grade'),
+                'physics_grade': get_val('physics_grade'),
+                'humanities_grade': get_val('humanities_grade')
+            }
             
-            # Anonymous logging for Admin Analytics
+            traits = [
+                get_val('work_environment'),
+                get_val('teamwork'),
+                get_val('problem_solving'),
+                get_val('activity'),
+                get_val('motivation')
+            ]
+            
+            education_goal = get_val('education_goal')
+            
+            # Anonymous logging for Admin Analytics (Fallback to STEM if they clicked tech things etc)
             try:
                 import uuid
                 conn = get_db_connection()
                 fake_uname = str(uuid.uuid4())[:8]
+                
+                # Derive roughly which broad bucket they fall into for the admin dashboard metric based on traits
+                inferred_interest = 'Social_Sciences'
+                if get_val('problem_solving') == 'Mechanical' or get_val('work_environment') == 'Laboratory' or get_val('activity') == 'Coding':
+                    inferred_interest = 'STEM'
+                elif get_val('activity') == 'Content' or get_val('activity') == 'Volunteering':
+                    inferred_interest = 'Arts_Sports'
+                
                 conn.execute("""
                     INSERT INTO users (username, password, email, math_grade, english_grade, sciences_grade, humanities_grade, interests)
                     VALUES (?, 'none', 'none', ?, ?, ?, ?, ?)
-                """, (fake_uname, math, eng, sci, hum, ints))
+                """, (fake_uname, user_inputs['math_grade'], user_inputs['english_grade'], user_inputs['biology_grade'], user_inputs['humanities_grade'], inferred_interest))
                 conn.commit()
                 conn.close()
             except Exception:
-                pass # Fail silently if DB is read-only or errors out
+                pass # Fail silently if DB is read-only
                 
-            grade_map = {'A':12, 'A-':11, 'B+':10, 'B':9, 'B-':8, 'C+':7, 'C':6, 'C-':5, 'D+':4, 'D':3, 'D-':2, 'E':1}
+            grade_map = {'A':12, 'A-':11, 'B+':10, 'B':9, 'B-':8, 'C+':7, 'C':6, 'C-':5, 'D+':4, 'D':3, 'D-':2, 'E':1, '':0}
             def map_grade(g): return grade_map.get(g, 0)
             
             recs = ""
             level_msg = ""
-            if not math or not sci or math == 'Select Grade':
-                recs = "<p style='text-align:center;'>Please select valid grades to see recommendations.</p>"
-                mean_grade = 0
-            else:
-                total_pts = map_grade(math) + map_grade(eng) + map_grade(sci) + map_grade(hum)
-                mean_grade = total_pts / 4.0
-                
-                # Expand recommendation logic based on new form inputs
-                if mean_grade >= 7.0: # C+ and above: Degree level
-                    level_msg = "<div class='alert alert-success' style='text-align:center; background-color: #e8f5e9; color: #2e7d32; border-color: #c8e6c9;'><strong>Qualification: Degree Level (University)</strong><br>You qualify for University Degree placement!</div>"
-                    
-                    if ints == 'STEM':
-                        if hobby == 'Building things':
-                            recs += """
-                                <div class="card card-black">
-                                    <h3>BSc. Civil / Mechanical Engineering</h3>
-                                    <p>Highly suited for your interest in building and STEM capabilities.</p>
-                                </div>
-                            """
-                        else:
-                            recs += """
-                                <div class="card card-black">
-                                    <h3>BSc. Computer Science / Software Eng.</h3>
-                                    <p>Premium pathway for tech-savvy individuals aiming for digital innovation.</p>
-                                </div>
-                                <div class="card card-green">
-                                    <h3>Bachelor of Medicine & Surgery (MBChB)</h3>
-                                    <p>High-demand healthcare career requiring strong science foundations.</p>
-                                </div>
-                            """
-                    elif ints == 'Social_Sciences':
-                        recs += """
-                            <div class="card card-black">
-                                <h3>Bachelor of Commerce / Economics</h3>
-                                <p>Perfect for corporate, banking, and strategic management roles.</p>
-                            </div>
-                            <div class="card card-green">
-                                <h3>Bachelor of Education (Arts/Science)</h3>
-                                <p>Prepares you for a teaching and educational administration career.</p>
-                            </div>
-                        """
-                    else: 
-                        recs += """
-                            <div class="card card-green">
-                                <h3>BA. in Graphic Design / Fine Arts</h3>
-                                <p>University degree emphasizing creative media and visual arts.</p>
-                            </div>
-                            <div class="card card-red">
-                                <h3>BSc. in Sports Science</h3>
-                                <p>Focuses on human physiology, athletic performance, and sports management.</p>
-                            </div>
-                        """
-                elif mean_grade >= 5.0: # Diploma level
-                    level_msg = "<div class='alert alert-success' style='text-align:center; background-color: #fff3e0; color: #e65100; border-color: #ffe0b2;'><strong>Qualification: Diploma Level</strong><br>You qualify for TVET Diploma courses.</div>"
-                    if ints == 'STEM':
-                        recs += """
-                            <div class="card card-green">
-                                <h3>Diploma in Information Technology</h3>
-                                <p>Hands-on IT networking, support, and basic development skills.</p>
-                            </div>
-                            <div class="card card-red">
-                                <h3>Diploma in Clinical Medicine / Pharmacy Tech</h3>
-                                <p>Mid-level pathway into healthcare and clinical services.</p>
-                            </div>
-                        """
-                    elif ints == 'Social_Sciences':
-                        recs += """
-                            <div class="card card-black">
-                                <h3>Diploma in Business Management</h3>
-                                <p>Foundational business, HR, and accounting principles.</p>
-                            </div>
-                            <div class="card card-green">
-                                <h3>Diploma in Social Work & Community Development</h3>
-                                <p>A pathway to NGO, community service, and governmental social roles.</p>
-                            </div>
-                        """
-                    else:
-                        recs += """
-                            <div class="card card-red">
-                                <h3>Diploma in Journalism & Mass Media</h3>
-                                <p>Media production, reporting, and broadcasting skills.</p>
-                            </div>
-                        """
-                else: # Artisan/Certificate level
-                    level_msg = "<div class='alert alert-success' style='text-align:center; background-color: #e1f5fe; color: #0277bd; border-color: #b3e5fc;'><strong>Qualification: Certificate/Artisan Level</strong><br>You qualify for high-demand technical TVET Certificate courses.</div>"
-                    if ints == 'STEM':
-                        recs += """
-                            <div class="card card-black">
-                                <h3>Artisan in Plumbing / Electrical Wiring</h3>
-                                <p>Highly demanded technical skills for the construction industry.</p>
-                            </div>
-                            <div class="card card-green">
-                                <h3>Certificate in ICT</h3>
-                                <p>Basic computer operation and technician qualifications.</p>
-                            </div>
-                        """
-                    else:
-                        recs += """
-                            <div class="card card-red">
-                                <h3>Certificate in Catering & Hospitality</h3>
-                                <p>Skills for the hotel, tourism, and food service industry.</p>
-                            </div>
-                            <div class="card card-black">
-                                <h3>Artisan in Tailoring & Dressmaking</h3>
-                                <p>Creative technical pathway into fashion and textiles.</p>
-                            </div>
-                        """
             
+            points = [map_grade(v) for v in user_inputs.values() if v]
+            if not points:
+                mean_grade = 0
+                recs = "<p style='text-align:center;'>Please select valid grades to see recommendations.</p>"
+            else:
+                mean_grade = sum(points) / len(user_inputs)
+                
+                # Dynamic Thresholds
+                if mean_grade >= 7.0:
+                    level_msg = "<div class='alert alert-success' style='text-align:center; background-color: #e8f5e9; color: #2e7d32; border-color: #c8e6c9;'><strong>Qualification: Degree Level (University)</strong><br>You qualify for Direct University placement!</div>"
+                elif mean_grade >= 5.0:
+                    level_msg = "<div class='alert alert-success' style='text-align:center; background-color: #fff3e0; color: #e65100; border-color: #ffe0b2;'><strong>Qualification: Diploma Level</strong><br>You qualify for TVET Diploma courses.</div>"
+                elif mean_grade >= 3.0:
+                    level_msg = "<div class='alert alert-success' style='text-align:center; background-color: #e1f5fe; color: #0277bd; border-color: #b3e5fc;'><strong>Qualification: Certificate Level</strong><br>You qualify for high-demand technical TVET Certificate courses.</div>"
+                else:
+                    level_msg = "<div class='alert alert-success' style='text-align:center; background-color: #f3e5f5; color: #4a148c; border-color: #e1bee7;'><strong>Qualification: Artisan Level</strong><br>You qualify for artisan-level practical skills programs.</div>"
+
+                from api.career_database import CAREERS
+                
+                scored_careers = []
+                for c in CAREERS:
+                    # Filter out if goal is much lower (e.g. they want a Certificate but it's a Degree).
+                    # But if they qualify for Degree and want a Diploma, we show Diplomas!
+                    if education_goal and c['level'] != education_goal:
+                        continue
+                        
+                    # Filter by minimum entry threshold
+                    if mean_grade < c['min_grade']:
+                        continue
+                        
+                    # Calculate Subject Compatibility Score (Weights)
+                    subject_score = 0
+                    for subj in c['subjects']:
+                        subj_val = map_grade(user_inputs.get(subj, ''))
+                        subject_score += subj_val * 2 # Subjects weigh heavily
+                        
+                    # Calculate Psychological Trait Match
+                    trait_score = 0
+                    for t in traits:
+                        if t in c['traits']:
+                            trait_score += c['traits'][t]
+                            
+                    total_score = subject_score + trait_score
+                    scored_careers.append((total_score, c))
+                    
+                # Rank and Take Top 4
+                scored_careers.sort(key=lambda x: x[0], reverse=True)
+                top_careers = scored_careers[:4]
+                
+                if not top_careers:
+                     recs = "<p style='text-align:center;'>No matching clusters found for this exact specific combination. Try broadening your goal.</p>"
+                else:
+                    for score, c in top_careers:
+                        color = "green" if c['level'] == "Degree" else "black" if c['level'] == "Diploma" else "red"
+                        badge = "<span class='badge badge-green' style='margin-top:1rem;'>98% Match</span>" if score > 40 else ""
+                        recs += f"""
+                            <div class="card card-{color}">
+                                <h3>{c['name']}</h3>
+                                <p><strong>Level:</strong> {c['level']} <br> <strong>Algorithm Weighted Score:</strong> {score} pts</p>
+                                {badge}
+                            </div>
+                        """
+
             ctx = {
                 'title': 'Your Recommendations',
                 'recommendations_list': recs,
                 'level_msg': level_msg,
-                'math_grade': math or '-',
-                'english_grade': eng or '-',
-                'sciences_grade': sci or '-',
-                'humanities_grade': hum or '-',
-                'interests': ints or '-',
-                'mean_grade': f"{mean_grade:.2f}" if math and math != 'Select Grade' else '-'
+                'math_grade': user_inputs['math_grade'] or '-',
+                'english_grade': user_inputs['english_grade'] or '-',
+                'kiswahili_grade': user_inputs['kiswahili_grade'] or '-',
+                'biology_grade': user_inputs['biology_grade'] or '-',
+                'chemistry_grade': user_inputs['chemistry_grade'] or '-',
+                'physics_grade': user_inputs['physics_grade'] or '-',
+                'humanities_grade': user_inputs['humanities_grade'] or '-',
+                'interests': 'Dynamic Weighted Scoring Output',
+                'mean_grade': f"{mean_grade:.2f}" if points else '-'
             }
             self.send_html(self.render_template('recommendations.html', ctx))
             
