@@ -1,0 +1,15 @@
+<div style="text-align: center; margin-bottom: 2rem;">
+    <h2>Scholarships & Funding Database</h2>
+    <p>Find financial aid tailored for your higher education journey in Kenya.</p>
+</div>
+
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; background: white; padding: 1rem; border-radius: var(--border-radius); box-shadow: var(--box-shadow);">
+    <form method="GET" action="/scholarships" style="display: flex; gap: 1rem; width: 100%;">
+        <input type="text" name="q" placeholder="Search scholarships by keyword..." style="flex: 1; padding: 0.75rem; border: 1px solid #ccc; border-radius: var(--border-radius);" value="{{search_query}}">
+        <button type="submit" class="btn-primary" style="margin: 0;">Search</button>
+    </form>
+</div>
+
+<div class="grid">
+    {{scholarships_list}}
+</div>

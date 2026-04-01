@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}} | Portal</title>
+    <!-- Modern font -> Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* Extra inline styles specific to certain views can go here if needed */
+        {{extra_css}}
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/" class="logo">
+            <span class="logo-accent">KE</span> Transition <span style="color:var(--color-red);">Portal</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/scholarships">Scholarships</a></li>
+            {{auth_links}}
+        </ul>
+    </nav>
+
+    <main class="container">
+        {{content}}
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Kenyan Transition Portal. Republic of Kenya. All Rights Reserved.</p>
+    </footer>
+</body>
+</html>

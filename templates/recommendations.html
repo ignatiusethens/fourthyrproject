@@ -1,0 +1,30 @@
+<div style="text-align: center; margin-bottom: 2rem;">
+    <h2>Your Competency-Based Career Recommendations</h2>
+    <p>Based on your Form Four KCSE grades, here are the optimized career pathways.</p>
+</div>
+
+<div class="grid">
+    {{recommendations_list}}
+</div>
+
+<div style="margin-top: 3rem; background: var(--color-white); padding: 2rem; border-radius: var(--border-radius); box-shadow: var(--box-shadow);">
+    <h3>Your Profile Summary</h3>
+    <p><strong>Interests:</strong> {{interests}}</p>
+    <table style="width: 100%; text-align: left; margin-top: 1rem;">
+        <tr>
+            <th>Math</th>
+            <th>English</th>
+            <th>Sciences</th>
+            <th>Humanities</th>
+        </tr>
+        <tr>
+            <td>{{math_grade}}</td>
+            <td>{{english_grade}}</td>
+            <td>{{sciences_grade}}</td>
+            <td>{{humanities_grade}}</td>
+        </tr>
+    </table>
+    <div style="margin-top: 1rem;">
+        <a href="/profile" class="btn-secondary" style="border-color: var(--color-black); color: var(--color-black);">Update Profile</a>
+    </div>
+</div>

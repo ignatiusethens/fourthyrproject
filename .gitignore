@@ -1,0 +1,13 @@
+# Python artifacts
+__pycache__/
+*.pyc
+
+# Virtual Environment
+venv/
+env/
+
+# IDE files
+.vscode/
+
+# Ignore local PDF documentation (optional, but a good practice for large files)
+*.pdf
