@@ -1,0 +1,159 @@
+<div class="ps-wrapper">
+  <div class="ps-progress-bar">
+    <div class="ps-step-label"><span class="ps-step-active">Step 1 of 4</span></div>
+    <div class="ps-bar"><div class="ps-bar-fill" style="width:25%"></div></div>
+    <div class="ps-step-name">Academic Background</div>
+  </div>
+
+  <div class="ps-card">
+    <h2 class="ps-section-title">Section 1: Academic Grades</h2>
+    <p class="ps-section-sub">Enter your final high school or equivalent examination grades. These help us match you with competitive university courses and scholarship eligibility criteria.</p>
+
+    <form method="POST" action="/profile/step1">
+
+      <div class="ps-two-col">
+        <div class="ps-col-block">
+          <h4 class="ps-col-heading"><span class="ps-col-bar blue"></span> Core Languages</h4>
+          <div class="ps-form-group">
+            <label>English Language <span class="ps-req">*</span></label>
+            <select name="english_grade" required>
+              <option value="">Select Grade</option>
+              <option>A</option><option>A-</option><option>B+</option><option>B</option>
+              <option>B-</option><option>C+</option><option>C</option><option>C-</option>
+              <option>D+</option><option>D</option><option>D-</option><option>E</option>
+            </select>
+          </div>
+          <div class="ps-form-group">
+            <label>Kiswahili <span class="ps-req">*</span></label>
+            <select name="kiswahili_grade" required>
+              <option value="">Select Grade</option>
+              <option>A</option><option>A-</option><option>B+</option><option>B</option>
+              <option>B-</option><option>C+</option><option>C</option><option>C-</option>
+              <option>D+</option><option>D</option><option>D-</option><option>E</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="ps-col-block">
+          <h4 class="ps-col-heading"><span class="ps-col-bar blue"></span> Mathematics &amp; Humanities</h4>
+          <div class="ps-form-group">
+            <label>Mathematics (Core/Advanced) <span class="ps-req">*</span></label>
+            <select name="math_grade" required>
+              <option value="">Select Grade</option>
+              <option>A</option><option>A-</option><option>B+</option><option>B</option>
+              <option>B-</option><option>C+</option><option>C</option><option>C-</option>
+              <option>D+</option><option>D</option><option>D-</option><option>E</option>
+            </select>
+          </div>
+          <div class="ps-form-group">
+            <label>Best Humanities Subject <span class="ps-req">*</span></label>
+            <select name="humanities_grade" required>
+              <option value="">e.g. Geography, History</option>
+              <option>A</option><option>A-</option><option>B+</option><option>B</option>
+              <option>B-</option><option>C+</option><option>C</option><option>C-</option>
+              <option>D+</option><option>D</option><option>D-</option><option>E</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="ps-science-block">
+        <div class="ps-science-header">
+          <h4 class="ps-col-heading"><span class="ps-col-bar red"></span> Science Cluster</h4>
+          <span class="ps-badge-pill">Min. 2 Required for STEM</span>
+        </div>
+        <div class="ps-three-col">
+          <div class="ps-form-group">
+            <label>Biology</label>
+            <select name="biology_grade">
+              <option value="">N/A</option>
+              <option>A</option><option>A-</option><option>B+</option><option>B</option>
+              <option>B-</option><option>C+</option><option>C</option><option>C-</option>
+              <option>D+</option><option>D</option><option>D-</option><option>E</option>
+            </select>
+          </div>
+          <div class="ps-form-group">
+            <label>Chemistry</label>
+            <select name="chemistry_grade">
+              <option value="">N/A</option>
+              <option>A</option><option>A-</option><option>B+</option><option>B</option>
+              <option>B-</option><option>C+</option><option>C</option><option>C-</option>
+              <option>D+</option><option>D</option><option>D-</option><option>E</option>
+            </select>
+          </div>
+          <div class="ps-form-group">
+            <label>Physics</label>
+            <select name="physics_grade">
+              <option value="">N/A</option>
+              <option>A</option><option>A-</option><option>B+</option><option>B</option>
+              <option>B-</option><option>C+</option><option>C</option><option>C-</option>
+              <option>D+</option><option>D</option><option>D-</option><option>E</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="ps-electives-block">
+        <h4 class="ps-elective-title">Other Elective Subjects</h4>
+        <p class="ps-section-sub" style="margin-bottom:0.75rem;">Select any other subjects you took in your final year.</p>
+        <div class="ps-chips" id="elective-chips">
+          <span class="ps-chip selected">Business Studies <button type="button" onclick="removeChip(this)">×</button></span>
+          <span class="ps-chip selected">Computer Science <button type="button" onclick="removeChip(this)">×</button></span>
+          <span class="ps-chip selected">French <button type="button" onclick="removeChip(this)">×</button></span>
+          <button type="button" class="ps-chip-add" onclick="addChip()">+ Add Subject</button>
+        </div>
+        <p class="ps-suggested-label">SUGGESTED FOR YOU</p>
+        <div class="ps-suggestions">
+          <span onclick="selectSuggestion(this)">Art &amp; Design</span>
+          <span onclick="selectSuggestion(this)">Agriculture</span>
+          <span onclick="selectSuggestion(this)">Music</span>
+          <span onclick="selectSuggestion(this)">Aviation</span>
+          <span onclick="selectSuggestion(this)">German</span>
+          <span onclick="selectSuggestion(this)">History</span>
+        </div>
+      </div>
+
+      <div class="ps-tip-box">
+        <span class="ps-tip-icon">💡</span>
+        <div><strong>Scholarship Tip</strong><br>Students with an A in Mathematics and at least two Sciences are eligible for the <strong>Global Tech Innovators Scholarship</strong>. Ensure these are accurate.</div>
+      </div>
+
+      <div class="ps-nav">
+        <a href="/profile" class="ps-btn-back">‹ Back</a>
+        <button type="submit" class="ps-btn-next">Next: Skills &amp; Aptitude ›</button>
+      </div>
+
+    </form>
+  </div>
+  <p class="ps-secure-note">🔒 SECURE DATA VERIFICATION IN PROGRESS</p>
+</div>
+
+<footer class="ps-footer">
+  <span>© 2026 Career &amp; Scholarship Portal. All rights reserved.</span>
+  <div><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">Help Center</a></div>
+</footer>
+
+<script>
+function removeChip(btn) {
+  btn.parentElement.remove();
+}
+function addChip() {
+  const name = prompt('Enter subject name:');
+  if (name) {
+    const chips = document.getElementById('elective-chips');
+    const chip = document.createElement('span');
+    chip.className = 'ps-chip selected';
+    chip.innerHTML = name + ' <button type="button" onclick="removeChip(this)">×</button>';
+    chips.insertBefore(chip, chips.lastElementChild);
+  }
+}
+function selectSuggestion(el) {
+  if (el.classList.contains('active')) { el.classList.remove('active'); return; }
+  el.classList.add('active');
+  const chips = document.getElementById('elective-chips');
+  const chip = document.createElement('span');
+  chip.className = 'ps-chip selected';
+  chip.innerHTML = el.textContent + ' <button type="button" onclick="removeChip(this)">×</button>';
+  chips.insertBefore(chip, chips.lastElementChild);
+}
+</script>

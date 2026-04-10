@@ -1,0 +1,180 @@
+<div class="ps-wrapper">
+  <div class="ps-progress-bar">
+    <div class="ps-step-label"><span class="ps-step-active">Step 2 of 4</span></div>
+    <div class="ps-bar"><div class="ps-bar-fill" style="width:50%"></div></div>
+    <div class="ps-step-name">Skills &amp; Aptitude</div>
+  </div>
+
+  <div class="ps-card">
+    <h2 class="ps-section-title">Section 2: Practical Skills &amp; Aptitude</h2>
+    <p class="ps-section-sub">Tell us what you're good at and how you approach challenges. This helps us match your talents with the right industries.</p>
+
+    <form method="POST" action="/profile/step2">
+
+      <div class="ps-aptitude-block">
+        <h4 class="ps-col-heading"><span style="margin-right:0.5rem;">🧩</span> Problem-Solving Scenario</h4>
+        <p class="ps-section-sub">Your team is falling behind on a critical deadline because of a technical bug. How do you respond?</p>
+        <div class="ps-form-group">
+          <select name="problem_solving">
+            <option value="">Choose the approach that feels most natural to you...</option>
+            <option value="Research">Dig into the data and analyze logs to find the root cause</option>
+            <option value="Talk">Communicate with the team to redistribute tasks and manage expectations</option>
+            <option value="Mechanical">Roll up your sleeves and start debugging the code directly</option>
+            <option value="Creative">Brainstorm a creative workaround to meet the deadline</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="ps-rating-block">
+        <h4 class="ps-col-heading"><span style="margin-right:0.5rem;">⚡</span> Core Competency Self-Rating</h4>
+        <div class="ps-rating-grid">
+          <div class="ps-rating-item">
+            <label>🧠 Analytical Problem Solving</label>
+            <div class="ps-rating-btns" data-name="rating_analytical">
+              <button type="button" onclick="setRating(this,1)">1</button>
+              <button type="button" onclick="setRating(this,2)">2</button>
+              <button type="button" onclick="setRating(this,3)">3</button>
+              <button type="button" class="active" onclick="setRating(this,4)">4</button>
+              <button type="button" onclick="setRating(this,5)">5</button>
+            </div>
+            <input type="hidden" name="rating_analytical" value="4">
+          </div>
+          <div class="ps-rating-item">
+            <label>&lt;/&gt; Technical &amp; Coding</label>
+            <div class="ps-rating-btns" data-name="rating_coding">
+              <button type="button" onclick="setRating(this,1)">1</button>
+              <button type="button" onclick="setRating(this,2)">2</button>
+              <button type="button" class="active" onclick="setRating(this,3)">3</button>
+              <button type="button" onclick="setRating(this,4)">4</button>
+              <button type="button" onclick="setRating(this,5)">5</button>
+            </div>
+            <input type="hidden" name="rating_coding" value="3">
+          </div>
+          <div class="ps-rating-item">
+            <label>💬 Verbal Communication</label>
+            <div class="ps-rating-btns" data-name="rating_verbal">
+              <button type="button" onclick="setRating(this,1)">1</button>
+              <button type="button" onclick="setRating(this,2)">2</button>
+              <button type="button" onclick="setRating(this,3)">3</button>
+              <button type="button" onclick="setRating(this,4)">4</button>
+              <button type="button" class="active" onclick="setRating(this,5)">5</button>
+            </div>
+            <input type="hidden" name="rating_verbal" value="5">
+          </div>
+          <div class="ps-rating-item">
+            <label>🔍 Critical Thinking</label>
+            <div class="ps-rating-btns" data-name="rating_critical">
+              <button type="button" onclick="setRating(this,1)">1</button>
+              <button type="button" onclick="setRating(this,2)">2</button>
+              <button type="button" onclick="setRating(this,3)">3</button>
+              <button type="button" class="active" onclick="setRating(this,4)">4</button>
+              <button type="button" onclick="setRating(this,5)">5</button>
+            </div>
+            <input type="hidden" name="rating_critical" value="4">
+          </div>
+          <div class="ps-rating-item">
+            <label>🎨 Creative Design</label>
+            <div class="ps-rating-btns" data-name="rating_creative">
+              <button type="button" onclick="setRating(this,1)">1</button>
+              <button type="button" class="active" onclick="setRating(this,2)">2</button>
+              <button type="button" onclick="setRating(this,3)">3</button>
+              <button type="button" onclick="setRating(this,4)">4</button>
+              <button type="button" onclick="setRating(this,5)">5</button>
+            </div>
+            <input type="hidden" name="rating_creative" value="2">
+          </div>
+          <div class="ps-rating-item">
+            <label>👥 Leadership &amp; Management</label>
+            <div class="ps-rating-btns" data-name="rating_leadership">
+              <button type="button" onclick="setRating(this,1)">1</button>
+              <button type="button" onclick="setRating(this,2)">2</button>
+              <button type="button" onclick="setRating(this,3)">3</button>
+              <button type="button" class="active" onclick="setRating(this,4)">4</button>
+              <button type="button" onclick="setRating(this,5)">5</button>
+            </div>
+            <input type="hidden" name="rating_leadership" value="4">
+          </div>
+        </div>
+        <p class="ps-rating-scale">Rating Scale: 1 = Foundational / Learning, 5 = Expert / Mastery</p>
+      </div>
+
+      <div class="ps-activity-block">
+        <div class="ps-activity-header">
+          <h4 class="ps-col-heading"><span style="margin-right:0.5rem;">📱</span> Activity Interests</h4>
+          <span class="ps-badge-pill">Select as many as apply</span>
+        </div>
+        <div class="ps-activity-grid">
+          <div class="ps-activity-card selected" onclick="toggleActivity(this)">
+            <div class="ps-act-icon">🔍</div>
+            <strong>Data Analysis</strong>
+            <p>Investigating patterns and extracting insights.</p>
+            <input type="checkbox" name="activity" value="Research" checked style="display:none">
+          </div>
+          <div class="ps-activity-card selected" onclick="toggleActivity(this)">
+            <div class="ps-act-icon">🔨</div>
+            <strong>Construction</strong>
+            <p>Working with hands to build physical objects.</p>
+            <input type="checkbox" name="activity" value="Building" checked style="display:none">
+          </div>
+          <div class="ps-activity-card" onclick="toggleActivity(this)">
+            <div class="ps-act-icon">💬</div>
+            <strong>Mentorship</strong>
+            <p>Guiding others and sharing complex knowledge.</p>
+            <input type="checkbox" name="activity" value="Helping" style="display:none">
+          </div>
+          <div class="ps-activity-card" onclick="toggleActivity(this)">
+            <div class="ps-act-icon">🎨</div>
+            <strong>Design</strong>
+            <p>Creating visual aesthetics and user experiences.</p>
+            <input type="checkbox" name="activity" value="Content" style="display:none">
+          </div>
+          <div class="ps-activity-card" onclick="toggleActivity(this)">
+            <div class="ps-act-icon">🧪</div>
+            <strong>Laboratory</strong>
+            <p>Conducting experiments in controlled environments.</p>
+            <input type="checkbox" name="activity" value="Laboratory" style="display:none">
+          </div>
+          <div class="ps-activity-card" onclick="toggleActivity(this)">
+            <div class="ps-act-icon">🤝</div>
+            <strong>Advocacy</strong>
+            <p>Helping people solve social or personal issues.</p>
+            <input type="checkbox" name="activity" value="Volunteering" style="display:none">
+          </div>
+        </div>
+      </div>
+
+      <div class="ps-form-group" style="margin-top:2rem;">
+        <h4 class="ps-col-heading"><span style="margin-right:0.5rem;">🏆</span> Notable Projects or Achievements</h4>
+        <p class="ps-section-sub">Share a brief summary of a project or award you are proud of (Optional).</p>
+        <input type="text" name="achievement" placeholder="e.g., Developed a student library app, Won the regional debate championship...">
+      </div>
+
+      <div class="ps-nav">
+        <a href="/profile/step1" class="ps-btn-back">‹ Back</a>
+        <button type="submit" class="ps-btn-next">Next: Preferences ›</button>
+      </div>
+
+    </form>
+  </div>
+  <p class="ps-secure-note">🔒 SECURE DATA VERIFICATION IN PROGRESS</p>
+</div>
+
+<footer class="ps-footer">
+  <span>© 2026 Career &amp; Scholarship Portal. All rights reserved.</span>
+  <div><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">Help Center</a></div>
+</footer>
+
+<script>
+function setRating(btn, val) {
+  const group = btn.parentElement;
+  group.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const name = group.dataset.name;
+  document.querySelector('input[name="' + name + '"]').value = val;
+}
+function toggleActivity(card) {
+  card.classList.toggle('selected');
+  const cb = card.querySelector('input[type=checkbox]');
+  cb.checked = card.classList.contains('selected');
+}
+</script>

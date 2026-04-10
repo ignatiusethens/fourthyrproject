@@ -142,20 +142,50 @@ class handler(http.server.BaseHTTPRequestHandler):
             self.send_redirect('/', session_id='', admin_logout=True)
             
         elif path == '/profile':
+            self.send_html(self.render_template('profile_intro.html', {'title': 'Career Profiling'}))
+
+        elif path == '/profile/step1':
+            self.send_html(self.render_template('profile_step1.html', {'title': 'Step 1 - Academic Grades'}))
+
+        elif path == '/profile/step2':
+            self.send_html(self.render_template('profile_step2.html', {'title': 'Step 2 - Skills & Aptitude'}))
+
+        elif path == '/profile/step3':
+            self.send_html(self.render_template('profile_step3.html', {'title': 'Step 3 - Preferences'}))
+
+        elif path == '/profile/step4':
+            # Pull saved cookie data to show in review
+            cookie_header = self.headers.get('Cookie', '')
+            import json as _json
+            profile_data = {}
+            for part in cookie_header.split(';'):
+                part = part.strip()
+                if part.startswith('profile_data='):
+                    try:
+                        profile_data = _json.loads(urllib.parse.unquote(part[len('profile_data='):]))
+                    except Exception:
+                        pass
             ctx = {
-                'title': 'Career Profiling',
-                'math_grade': 'Select Grade',
-                'english_grade': 'Select Grade',
-                'sciences_grade': 'Select Grade',
-                'humanities_grade': 'Select Grade',
-                'm_score': '50',
-                'interests': 'Select Area'
+                'title': 'Step 4 - Final Review',
+                'math_grade': profile_data.get('math_grade', '-'),
+                'english_grade': profile_data.get('english_grade', '-'),
+                'kiswahili_grade': profile_data.get('kiswahili_grade', '-'),
+                'biology_grade': profile_data.get('biology_grade', '-'),
+                'chemistry_grade': profile_data.get('chemistry_grade', '-'),
+                'physics_grade': profile_data.get('physics_grade', '-'),
+                'humanities_grade': profile_data.get('humanities_grade', '-'),
+                'problem_solving': profile_data.get('problem_solving', '-'),
+                'rating_analytical': profile_data.get('rating_analytical', '-'),
+                'rating_coding': profile_data.get('rating_coding', '-'),
+                'rating_leadership': profile_data.get('rating_leadership', '-'),
+                'activity': ', '.join(profile_data.get('activity', ['-'])) if isinstance(profile_data.get('activity'), list) else profile_data.get('activity', '-'),
+                'work_environment': profile_data.get('work_environment', '-'),
+                'industry_interests': profile_data.get('industry_interests', '-'),
+                'relocate': 'Willing to relocate' if profile_data.get('relocate') == 'yes' else 'Not relocating',
+                'budget': profile_data.get('budget', '-'),
             }
-            if 'msg' in query and query['msg'][0] == 'success':
-                ctx['alert'] = '<div class="alert alert-success">Profile processed successfully!</div>'
-                
-            self.send_html(self.render_template('profile.html', ctx))
-            
+            self.send_html(self.render_template('profile_step4.html', ctx))
+
         elif path == '/recommendations':
                 
             math = user['math_grade']
@@ -332,7 +362,186 @@ class handler(http.server.BaseHTTPRequestHandler):
                     'alert': '<div class="alert alert-error">Invalid password.</div>'
                 }))
 
-        elif path == '/profile':
+        elif path == '/profile/step1':
+            import json as _json
+            # Load existing cookie data
+            cookie_header = self.headers.get('Cookie', '')
+            profile_data = {}
+            for part in cookie_header.split(';'):
+                part = part.strip()
+                if part.startswith('profile_data='):
+                    try:
+                        profile_data = _json.loads(urllib.parse.unquote(part[len('profile_data='):]))
+                    except Exception:
+                        pass
+            profile_data.update({
+                'math_grade': get_val('math_grade'),
+                'english_grade': get_val('english_grade'),
+                'kiswahili_grade': get_val('kiswahili_grade'),
+                'biology_grade': get_val('biology_grade'),
+                'chemistry_grade': get_val('chemistry_grade'),
+                'physics_grade': get_val('physics_grade'),
+                'humanities_grade': get_val('humanities_grade'),
+            })
+            cookie_val = urllib.parse.quote(_json.dumps(profile_data))
+            self.send_response(302)
+            self.send_header('Location', '/profile/step2')
+            self.send_header('Set-Cookie', f'profile_data={cookie_val}; Path=/; HttpOnly')
+            self.end_headers()
+
+        elif path == '/profile/step2':
+            import json as _json
+            cookie_header = self.headers.get('Cookie', '')
+            profile_data = {}
+            for part in cookie_header.split(';'):
+                part = part.strip()
+                if part.startswith('profile_data='):
+                    try:
+                        profile_data = _json.loads(urllib.parse.unquote(part[len('profile_data='):]))
+                    except Exception:
+                        pass
+            activities = form_data.get('activity', [])
+            profile_data.update({
+                'problem_solving': get_val('problem_solving'),
+                'rating_analytical': get_val('rating_analytical'),
+                'rating_coding': get_val('rating_coding'),
+                'rating_verbal': get_val('rating_verbal'),
+                'rating_critical': get_val('rating_critical'),
+                'rating_creative': get_val('rating_creative'),
+                'rating_leadership': get_val('rating_leadership'),
+                'activity': activities,
+                'achievement': get_val('achievement'),
+            })
+            cookie_val = urllib.parse.quote(_json.dumps(profile_data))
+            self.send_response(302)
+            self.send_header('Location', '/profile/step3')
+            self.send_header('Set-Cookie', f'profile_data={cookie_val}; Path=/; HttpOnly')
+            self.end_headers()
+
+        elif path == '/profile/step3':
+            import json as _json
+            cookie_header = self.headers.get('Cookie', '')
+            profile_data = {}
+            for part in cookie_header.split(';'):
+                part = part.strip()
+                if part.startswith('profile_data='):
+                    try:
+                        profile_data = _json.loads(urllib.parse.unquote(part[len('profile_data='):]))
+                    except Exception:
+                        pass
+            profile_data.update({
+                'work_environment': get_val('work_environment'),
+                'teamwork': get_val('teamwork'),
+                'motivation': get_val('motivation'),
+                'industry_interests': get_val('industry_interests'),
+                'preferred_city': get_val('preferred_city'),
+                'relocate': get_val('relocate'),
+                'commitment': get_val('commitment'),
+                'budget': get_val('budget'),
+            })
+            cookie_val = urllib.parse.quote(_json.dumps(profile_data))
+            self.send_response(302)
+            self.send_header('Location', '/profile/step4')
+            self.send_header('Set-Cookie', f'profile_data={cookie_val}; Path=/; HttpOnly')
+            self.end_headers()
+
+        elif path == '/profile/submit':
+            import json as _json
+            cookie_header = self.headers.get('Cookie', '')
+            profile_data = {}
+            for part in cookie_header.split(';'):
+                part = part.strip()
+                if part.startswith('profile_data='):
+                    try:
+                        profile_data = _json.loads(urllib.parse.unquote(part[len('profile_data='):]))
+                    except Exception:
+                        pass
+
+            user_inputs = {
+                'math_grade': profile_data.get('math_grade', ''),
+                'english_grade': profile_data.get('english_grade', ''),
+                'kiswahili_grade': profile_data.get('kiswahili_grade', ''),
+                'biology_grade': profile_data.get('biology_grade', ''),
+                'chemistry_grade': profile_data.get('chemistry_grade', ''),
+                'physics_grade': profile_data.get('physics_grade', ''),
+                'humanities_grade': profile_data.get('humanities_grade', ''),
+            }
+
+            activities = profile_data.get('activity', [])
+            if isinstance(activities, str):
+                activities = [activities]
+
+            traits = [
+                profile_data.get('work_environment', ''),
+                profile_data.get('teamwork', ''),
+                profile_data.get('problem_solving', ''),
+                activities[0] if activities else '',
+                profile_data.get('motivation', ''),
+            ]
+
+            education_goal = get_val('education_goal') or ''
+
+            # Run the recommendation algorithm
+            grade_map = {'A':12,'A-':11,'B+':10,'B':9,'B-':8,'C+':7,'C':6,'C-':5,'D+':4,'D':3,'D-':2,'E':1,'':0}
+            def map_grade(g): return grade_map.get(g, 0)
+
+            recs = ""
+            level_msg = ""
+            points = [map_grade(v) for v in user_inputs.values() if v]
+            if not points:
+                mean_grade = 0
+                recs = "<p style='text-align:center;'>Please select valid grades to see recommendations.</p>"
+            else:
+                mean_grade = sum(points) / len(user_inputs)
+                if mean_grade >= 7.0:
+                    level_msg = "<div class='alert alert-success' style='text-align:center;background:#e8f5e9;color:#2e7d32;border-color:#c8e6c9;'><strong>Qualification: Degree Level (University)</strong><br>You qualify for Direct University placement!</div>"
+                elif mean_grade >= 5.0:
+                    level_msg = "<div class='alert alert-success' style='text-align:center;background:#fff3e0;color:#e65100;border-color:#ffe0b2;'><strong>Qualification: Diploma Level</strong><br>You qualify for TVET Diploma courses.</div>"
+                elif mean_grade >= 3.0:
+                    level_msg = "<div class='alert alert-success' style='text-align:center;background:#e1f5fe;color:#0277bd;border-color:#b3e5fc;'><strong>Qualification: Certificate Level</strong><br>You qualify for high-demand technical TVET Certificate courses.</div>"
+                else:
+                    level_msg = "<div class='alert alert-success' style='text-align:center;background:#f3e5f5;color:#4a148c;border-color:#e1bee7;'><strong>Qualification: Artisan Level</strong><br>You qualify for artisan-level practical skills programs.</div>"
+
+                from api.career_database import CAREERS
+                scored_careers = []
+                for c in CAREERS:
+                    if education_goal and c['level'] != education_goal:
+                        continue
+                    if mean_grade < c['min_grade']:
+                        continue
+                    subject_score = sum(map_grade(user_inputs.get(subj, '')) * 2 for subj in c['subjects'])
+                    trait_score = sum(c['traits'].get(t, 0) for t in traits)
+                    scored_careers.append((subject_score + trait_score, c))
+
+                scored_careers.sort(key=lambda x: x[0], reverse=True)
+                for score, c in scored_careers[:4]:
+                    color = "green" if c['level'] == "Degree" else "black" if c['level'] == "Diploma" else "red"
+                    badge = "<span class='badge badge-green' style='margin-top:1rem;'>98% Match</span>" if score > 40 else ""
+                    recs += f"""<div class="card card-{color}"><h3>{c['name']}</h3>
+                        <p><strong>Level:</strong> {c['level']} <br><strong>Score:</strong> {score} pts</p>{badge}</div>"""
+                if not scored_careers:
+                    recs = "<p style='text-align:center;'>No matching clusters found. Try broadening your goal.</p>"
+
+            ctx = {
+                'title': 'Your Recommendations',
+                'recommendations_list': recs,
+                'level_msg': level_msg,
+                'math_grade': user_inputs['math_grade'] or '-',
+                'english_grade': user_inputs['english_grade'] or '-',
+                'kiswahili_grade': user_inputs['kiswahili_grade'] or '-',
+                'biology_grade': user_inputs['biology_grade'] or '-',
+                'chemistry_grade': user_inputs['chemistry_grade'] or '-',
+                'physics_grade': user_inputs['physics_grade'] or '-',
+                'humanities_grade': user_inputs['humanities_grade'] or '-',
+                'interests': 'Dynamic Weighted Scoring Output',
+                'mean_grade': f"{mean_grade:.2f}" if points else '-'
+            }
+            # Clear the profile cookie after submission
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+            self.send_header('Set-Cookie', 'profile_data=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT')
+            self.end_headers()
+            self.wfile.write(self.render_template('recommendations.html', ctx))
             user_inputs = {
                 'math_grade': get_val('math_grade'),
                 'english_grade': get_val('english_grade'),

@@ -1,0 +1,184 @@
+<div class="ps-wrapper">
+  <div class="ps-progress-bar">
+    <div class="ps-step-label"><span class="ps-step-active">Step 3 of 4</span></div>
+    <div class="ps-bar"><div class="ps-bar-fill" style="width:75%"></div></div>
+    <div class="ps-step-name">Preferences &amp; Work-style</div>
+  </div>
+
+  <div class="ps-step3-layout">
+    <div class="ps-card" style="flex:1;">
+      <h2 class="ps-section-title">Section 3: Work Environment &amp; Career Preferences</h2>
+      <p class="ps-section-sub">Define your ideal daily workflow and professional motivations to help us narrow down your path.</p>
+
+      <form method="POST" action="/profile/step3" id="step3form">
+
+        <div class="ps-env-block">
+          <h4 class="ps-col-heading"><span style="margin-right:0.5rem;">🏢</span> Ideal Work Environment</h4>
+          <div class="ps-env-grid">
+            <label class="ps-env-card">
+              <input type="radio" name="work_environment" value="Office" required>
+              <div class="ps-env-inner">
+                <span>🏢</span><strong>Office</strong><small>IN-PERSON</small>
+              </div>
+            </label>
+            <label class="ps-env-card">
+              <input type="radio" name="work_environment" value="Remote">
+              <div class="ps-env-inner">
+                <span>🌐</span><strong>Remote</strong><small>ANYWHERE</small>
+              </div>
+            </label>
+            <label class="ps-env-card selected">
+              <input type="radio" name="work_environment" value="Hybrid" checked>
+              <div class="ps-env-inner">
+                <span>💼</span><strong>Hybrid</strong><small>MIXED</small>
+              </div>
+            </label>
+            <label class="ps-env-card">
+              <input type="radio" name="work_environment" value="Outdoors">
+              <div class="ps-env-inner">
+                <span>🌿</span><strong>Field</strong><small>ON-SITE</small>
+              </div>
+            </label>
+            <label class="ps-env-card">
+              <input type="radio" name="work_environment" value="Laboratory">
+              <div class="ps-env-inner">
+                <span>🧪</span><strong>Lab</strong><small>RESEARCH</small>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="ps-two-col" style="margin-top:1.5rem;">
+          <div class="ps-form-group">
+            <label>👥 Team Dynamic Preference</label>
+            <select name="teamwork">
+              <option value="Team">Dynamic Team Collaboration</option>
+              <option value="Independent">Independent / Solo</option>
+              <option value="Leading">Leading &amp; Managing Others</option>
+              <option value="Helping">One-on-One Helping</option>
+            </select>
+          </div>
+          <div class="ps-form-group">
+            <label>⚡ Primary Career Driver</label>
+            <select name="motivation">
+              <option value="Passion">Innovation &amp; Problem Solving</option>
+              <option value="Wealth">High Financial Earning</option>
+              <option value="Security">Job Security &amp; Stability</option>
+              <option value="Flexibility">Flexibility &amp; Work-life Balance</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="ps-form-group" style="margin-top:1.5rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <label>Industry Interests (Select up to 5)</label>
+            <span class="ps-badge-pill" id="industry-count">Selected: 0/5</span>
+          </div>
+          <div class="ps-industry-pills">
+            <span class="ps-pill" onclick="togglePill(this)" data-val="Healthcare">Healthcare</span>
+            <span class="ps-pill active" onclick="togglePill(this)" data-val="Fintech">Fintech</span>
+            <span class="ps-pill" onclick="togglePill(this)" data-val="AI">Artificial Intelligence</span>
+            <span class="ps-pill" onclick="togglePill(this)" data-val="Creative">Creative Arts</span>
+            <span class="ps-pill active" onclick="togglePill(this)" data-val="Energy">Renewable Energy</span>
+            <span class="ps-pill" onclick="togglePill(this)" data-val="Ecommerce">E-commerce</span>
+            <span class="ps-pill" onclick="togglePill(this)" data-val="Cyber">Cybersecurity</span>
+            <span class="ps-pill" onclick="togglePill(this)" data-val="EdTech">Education Tech</span>
+          </div>
+          <input type="hidden" name="industry_interests" id="industry-hidden" value="Fintech,Energy">
+        </div>
+
+        <div class="ps-two-col" style="margin-top:1.5rem;">
+          <div class="ps-form-group">
+            <label>📍 Preferred Work City</label>
+            <select name="preferred_city">
+              <option>Nairobi, KE</option>
+              <option>Mombasa, KE</option>
+              <option>Kisumu, KE</option>
+              <option>Nakuru, KE</option>
+              <option>Eldoret, KE</option>
+              <option>Any City</option>
+            </select>
+          </div>
+          <div class="ps-form-group">
+            <label>Willing to relocate?</label>
+            <div class="ps-toggle-row">
+              <span>Open to moving for the right opportunity.</span>
+              <label class="ps-toggle">
+                <input type="checkbox" name="relocate" value="yes" checked>
+                <span class="ps-toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="ps-two-col" style="margin-top:1rem;">
+          <div class="ps-form-group">
+            <label>⏱ Weekly Commitment</label>
+            <select name="commitment">
+              <option>Full-time (40+ hrs)</option>
+              <option>Part-time (20-30 hrs)</option>
+              <option>Flexible</option>
+            </select>
+          </div>
+          <div class="ps-form-group">
+            <label>📅 Budget for Upskilling (Annual)</label>
+            <select name="budget">
+              <option>KES 50k - 200k</option>
+              <option>KES 200k - 500k</option>
+              <option>KES 500k+</option>
+              <option>Need Full Scholarship</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="ps-nav">
+          <a href="/profile/step2" class="ps-btn-back">‹ Back</a>
+          <button type="submit" class="ps-btn-next">Next: Review ›</button>
+        </div>
+
+      </form>
+    </div>
+
+    <div class="ps-step3-sidebar">
+      <div class="ps-sidebar-card">
+        <h4>❓ What you'll get</h4>
+        <ul class="ps-sidebar-list">
+          <li><span>🔘</span><div><strong>Tailored majors &amp; courses</strong><p>Based on your subject grades and passions.</p></div></li>
+          <li><span>🔘</span><div><strong>Suggested next steps</strong><p>Actionable milestones for your career.</p></div></li>
+          <li><span>🔘</span><div><strong>Scholarships &amp; resources</strong><p>Funding opportunities tailored to your profile.</p></div></li>
+        </ul>
+      </div>
+      <div class="ps-sidebar-card ps-privacy-card">
+        <h4>🛡️ PRIVACY FIRST</h4>
+        <p>Your preferences are used exclusively to match you with career opportunities. We never sell your personal data.</p>
+      </div>
+    </div>
+  </div>
+
+  <p class="ps-secure-note">🔒 SECURE DATA VERIFICATION IN PROGRESS</p>
+</div>
+
+<footer class="ps-footer">
+  <span>© 2026 Career &amp; Scholarship Portal. All rights reserved.</span>
+  <div><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">Help Center</a></div>
+</footer>
+
+<script>
+document.querySelectorAll('.ps-env-card input').forEach(radio => {
+  radio.addEventListener('change', () => {
+    document.querySelectorAll('.ps-env-card').forEach(c => c.classList.remove('selected'));
+    radio.closest('.ps-env-card').classList.add('selected');
+  });
+});
+
+function togglePill(el) {
+  const active = document.querySelectorAll('.ps-pill.active');
+  if (!el.classList.contains('active') && active.length >= 5) return;
+  el.classList.toggle('active');
+  const vals = [...document.querySelectorAll('.ps-pill.active')].map(p => p.dataset.val);
+  document.getElementById('industry-hidden').value = vals.join(',');
+  document.getElementById('industry-count').textContent = 'Selected: ' + vals.length + '/5';
+}
+// init count
+document.getElementById('industry-count').textContent = 'Selected: ' + document.querySelectorAll('.ps-pill.active').length + '/5';
+</script>

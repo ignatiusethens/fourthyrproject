@@ -1,0 +1,97 @@
+<div class="ps-wrapper">
+  <div class="ps-progress-bar">
+    <div class="ps-step-label"><span class="ps-step-active">Step 4 of 4</span></div>
+    <div class="ps-bar"><div class="ps-bar-fill" style="width:100%"></div></div>
+    <div class="ps-step-name">Review &amp; Submit Your Profile</div>
+  </div>
+
+  <div class="ps-step4-layout">
+    <div class="ps-card" style="flex:1;">
+      <h2 class="ps-section-title">Final Review</h2>
+      <p class="ps-section-sub">Take a moment to ensure your profile accurately reflects your goals and achievements.</p>
+
+      <form method="POST" action="/profile/submit">
+
+        <div class="ps-review-block">
+          <div class="ps-review-header">
+            <h4>🎓 Academic Profile</h4>
+            <a href="/profile/step1" class="ps-edit-link">✏️</a>
+          </div>
+          <div class="ps-review-row"><span>Mathematics</span><strong>{{math_grade}}</strong></div>
+          <div class="ps-review-row"><span>English Language</span><strong>{{english_grade}}</strong></div>
+          <div class="ps-review-row"><span>Sciences</span><strong>{{biology_grade}} / {{chemistry_grade}} / {{physics_grade}}</strong></div>
+          <div class="ps-review-row"><span>Humanities</span><strong>{{humanities_grade}}</strong></div>
+          <div class="ps-review-row"><span>Kiswahili</span><strong>{{kiswahili_grade}}</strong></div>
+        </div>
+
+        <div class="ps-review-block">
+          <div class="ps-review-header">
+            <h4>🧠 Skills &amp; Aptitude</h4>
+            <a href="/profile/step2" class="ps-edit-link">✏️</a>
+          </div>
+          <div class="ps-review-row"><span>Problem Solving Approach</span><strong>{{problem_solving}}</strong></div>
+          <div class="ps-review-row"><span>Analytical Rating</span><strong>{{rating_analytical}} / 5</strong></div>
+          <div class="ps-review-row"><span>Technical &amp; Coding</span><strong>{{rating_coding}} / 5</strong></div>
+          <div class="ps-review-row"><span>Leadership</span><strong>{{rating_leadership}} / 5</strong></div>
+          <div class="ps-review-row"><span>Primary Activity Interest</span><strong>{{activity}}</strong></div>
+        </div>
+
+        <div class="ps-review-block">
+          <div class="ps-review-header">
+            <h4>💼 Work-style &amp; Goals</h4>
+            <a href="/profile/step3" class="ps-edit-link">✏️</a>
+          </div>
+          <div class="ps-review-row"><span>Environment</span><strong>{{work_environment}}</strong></div>
+          <div class="ps-review-row"><span>Industry Focus</span><strong>{{industry_interests}}</strong></div>
+          <div class="ps-review-row"><span>Relocation</span><strong>{{relocate}}</strong></div>
+          <div class="ps-review-row"><span>Budget Constraint</span><strong>{{budget}}</strong></div>
+        </div>
+
+        <div class="ps-nav" style="margin-top:2rem;">
+          <a href="/profile/step3" class="ps-btn-back">‹ Back</a>
+          <button type="submit" class="ps-btn-next" style="background:#3b82f6;">Get My Recommendations ›</button>
+        </div>
+
+      </form>
+    </div>
+
+    <div class="ps-step3-sidebar">
+      <div class="ps-sidebar-card ps-matches-card">
+        <h4 style="color:#3b82f6;">✦ Preliminary Matches</h4>
+        <p>Based on your profile, you show exceptional aptitude in technical analysis and creative problem solving.</p>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin:0.75rem 0;">
+          <span class="ps-match-tag">Software Engineering</span>
+          <span class="ps-match-tag">Data Science</span>
+          <span class="ps-match-tag">Research</span>
+        </div>
+        <a href="#" style="font-size:0.8rem;color:#3b82f6;">🔘 Complete the profile to unlock full details.</a>
+      </div>
+
+      <div class="ps-sidebar-card" style="margin-top:1rem;">
+        <h4>✉️ Get a copy in your inbox <span style="font-weight:400;font-size:0.85rem;">(Optional)</span></h4>
+        <div class="ps-email-row">
+          <span>✉️</span>
+          <input type="email" name="email" placeholder="alex.smith@example.com">
+        </div>
+        <p style="font-size:0.8rem;color:#6b7280;margin-top:0.5rem;">We'll send your detailed roadmap and scholarship opportunities directly to you.</p>
+      </div>
+
+      <div class="ps-sidebar-card" style="margin-top:1rem;border:1.5px dashed #d1d5db;background:transparent;">
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+          <span>📋</span><strong>Save &amp; Continue Later</strong>
+        </div>
+      </div>
+
+      <p style="font-size:0.75rem;color:#9ca3af;margin-top:1rem;line-height:1.5;">
+        🛡️ By clicking "Get My Recommendations", you agree to our Privacy Policy. Your data is encrypted and used only to generate your personalized career report.
+      </p>
+    </div>
+  </div>
+
+  <p class="ps-secure-note">🔒 SECURE DATA VERIFICATION IN PROGRESS</p>
+</div>
+
+<footer class="ps-footer">
+  <span>© 2026 Career &amp; Scholarship Portal. All rights reserved.</span>
+  <div><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">Help Center</a></div>
+</footer>
