@@ -128,8 +128,11 @@ def init_db():
     except Exception:
         pass
 
-# Run on startup
-init_db()
+# Run on startup — wrapped so a DB error doesn't crash the whole app
+try:
+    init_db()
+except Exception:
+    pass
 
 def hash_password(pw):
     return hashlib.sha256(pw.encode()).hexdigest()
@@ -523,10 +526,20 @@ class handler(http.server.BaseHTTPRequestHandler):
             masked = db_url[:30] + "..." if len(db_url) > 30 else db_url
             gmail = os.getenv("careerapp_gmail", "NOT SET")
             gmail_pass = "SET" if os.getenv("careerapps_password") else "NOT SET"
+            # Test DB connection
+            db_status = "untested"
+            try:
+                conn = get_db_connection()
+                db_fetchone(conn, "SELECT 1 as ok")
+                conn.close()
+                db_status = "OK"
+            except Exception as e:
+                db_status = f"ERROR: {e}"
             self.send_html(f"""<pre>
 Careerdatabase_URL = {masked}
 PG_AVAILABLE = {PG_AVAILABLE}
 is_postgres() = {is_postgres()}
+DB connection = {db_status}
 GMAIL_USER = {gmail}
 GMAIL_APP_PASSWORD = {gmail_pass}
 </pre>""".encode())
