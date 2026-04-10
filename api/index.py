@@ -485,7 +485,7 @@ class handler(http.server.BaseHTTPRequestHandler):
                 else:
                     level_msg = "<div class='alert alert-success' style='text-align:center;background:#f3e5f5;color:#4a148c;border-color:#e1bee7;'><strong>Qualification: Artisan Level</strong><br>You qualify for artisan-level practical skills programs.</div>"
 
-                from api.career_database import CAREERS
+                from career_database import CAREERS
                 scored_careers = []
                 for c in CAREERS:
                     if education_goal and c['level'] != education_goal:
