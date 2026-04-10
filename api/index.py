@@ -122,6 +122,12 @@ class handler(http.server.BaseHTTPRequestHandler):
         if path.startswith('/static/'):
             if path.endswith('.css'):
                 self.serve_static(path.lstrip('/'), 'text/css')
+            elif path.endswith('.png'):
+                self.serve_static(path.lstrip('/'), 'image/png')
+            elif path.endswith('.jpg') or path.endswith('.jpeg'):
+                self.serve_static(path.lstrip('/'), 'image/jpeg')
+            elif path.endswith('.ico'):
+                self.serve_static(path.lstrip('/'), 'image/x-icon')
             return
 
         user = self.get_current_user()
