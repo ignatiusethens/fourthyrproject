@@ -75,16 +75,24 @@
             <span class="ps-badge-pill" id="industry-count">Selected: 0/5</span>
           </div>
           <div class="ps-industry-pills">
-            <span class="ps-pill" onclick="togglePill(this)" data-val="Healthcare">Healthcare</span>
-            <span class="ps-pill active" onclick="togglePill(this)" data-val="Fintech">Fintech</span>
-            <span class="ps-pill" onclick="togglePill(this)" data-val="AI">Artificial Intelligence</span>
-            <span class="ps-pill" onclick="togglePill(this)" data-val="Creative">Creative Arts</span>
-            <span class="ps-pill active" onclick="togglePill(this)" data-val="Energy">Renewable Energy</span>
-            <span class="ps-pill" onclick="togglePill(this)" data-val="Ecommerce">E-commerce</span>
-            <span class="ps-pill" onclick="togglePill(this)" data-val="Cyber">Cybersecurity</span>
-            <span class="ps-pill" onclick="togglePill(this)" data-val="EdTech">Education Tech</span>
+            <span class="ps-pill" onclick="togglePill(this)" data-val="Healthcare">🏥 Healthcare</span>
+            <span class="ps-pill" onclick="togglePill(this)" data-val="Fintech">💳 Fintech</span>
+            <span class="ps-pill" onclick="togglePill(this)" data-val="AI">🤖 Artificial Intelligence</span>
+            <span class="ps-pill" onclick="togglePill(this)" data-val="Creative">🎨 Creative Arts</span>
+            <span class="ps-pill" onclick="togglePill(this)" data-val="Energy">⚡ Renewable Energy</span>
+            <span class="ps-pill" onclick="togglePill(this)" data-val="Ecommerce">🛒 E-commerce</span>
+            <span class="ps-pill" onclick="togglePill(this)" data-val="Cyber">🔐 Cybersecurity</span>
+            <span class="ps-pill" onclick="togglePill(this)" data-val="EdTech">📚 Education Tech</span>
+            <span class="ps-pill" onclick="togglePill(this)" data-val="Engineering">⚙️ Engineering</span>
+            <span class="ps-pill" onclick="togglePill(this)" data-val="Agriculture">🌱 Agriculture</span>
+            <span class="ps-pill" onclick="togglePill(this)" data-val="Law">⚖️ Law & Justice</span>
+            <span class="ps-pill" onclick="togglePill(this)" data-val="Media">📡 Media & Journalism</span>
+            <span class="ps-pill" onclick="togglePill(this)" data-val="Tourism">✈️ Tourism & Hospitality</span>
+            <span class="ps-pill" onclick="togglePill(this)" data-val="SocialWork">🤝 Social Work & NGO</span>
+            <span class="ps-pill" onclick="togglePill(this)" data-val="Environment">🌍 Environment & Conservation</span>
+            <span class="ps-pill" onclick="togglePill(this)" data-val="Business">📊 Business & Entrepreneurship</span>
           </div>
-          <input type="hidden" name="industry_interests" id="industry-hidden" value="Fintech,Energy">
+          <input type="hidden" name="industry_interests" id="industry-hidden" value="">
         </div>
 
         <div class="ps-two-col" style="margin-top:1.5rem;">
@@ -180,5 +188,5 @@ function togglePill(el) {
   document.getElementById('industry-count').textContent = 'Selected: ' + vals.length + '/5';
 }
 // init count
-document.getElementById('industry-count').textContent = 'Selected: ' + document.querySelectorAll('.ps-pill.active').length + '/5';
+document.getElementById('industry-count').textContent = 'Selected: 0/5';
 </script>

@@ -511,7 +511,10 @@ class handler(http.server.BaseHTTPRequestHandler):
                         continue
                     subject_score = sum(map_grade(user_inputs.get(subj, '')) * 2 for subj in c['subjects'])
                     trait_score = sum(c['traits'].get(t, 0) for t in traits)
-                    scored_careers.append((subject_score + trait_score, c))
+                    # Industry interest bonus — +8 per matching industry
+                    industry_list = [i.strip() for i in profile_data.get('industry_interests', '').split(',') if i.strip()]
+                    industry_score = sum(8 for ind in industry_list if ind in c.get('industries', []))
+                    scored_careers.append((subject_score + trait_score + industry_score, c))
 
                 scored_careers.sort(key=lambda x: x[0], reverse=True)
                 for score, c in scored_careers[:4]:
