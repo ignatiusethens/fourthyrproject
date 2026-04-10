@@ -1,0 +1,61 @@
+<div class="auth-page">
+  <div class="auth-left">
+    <div class="auth-card">
+      <h2>Sign in to your account</h2>
+      <p class="auth-sub">Enter your credentials to access your career pathways and scholarship matches.</p>
+      {{alert}}
+      <form method="POST" action="/login">
+        <div class="auth-field">
+          <label>Email Address</label>
+          <div class="auth-input-wrap">
+            <span>✉️</span>
+            <input type="email" name="email" placeholder="name@example.com" required>
+          </div>
+        </div>
+        <div class="auth-field">
+          <div class="auth-label-row">
+            <label>Password</label>
+            <a href="/forgot-password" class="auth-forgot">Forgot password?</a>
+          </div>
+          <div class="auth-input-wrap">
+            <span>🔒</span>
+            <input type="password" name="password" id="pwd" placeholder="••••••••" required>
+            <button type="button" onclick="togglePwd()" class="auth-eye">👁</button>
+          </div>
+        </div>
+        <label class="auth-remember">
+          <input type="checkbox" name="remember"> Remember me for 30 days
+        </label>
+        <button type="submit" class="auth-btn-primary">Log in</button>
+      </form>
+      <p class="auth-switch">Don't have an account? <a href="/register">Create one</a></p>
+      <div class="auth-secure">
+        🛡️ <div><strong>SECURE CONNECTION</strong><br>Your data is protected by industry-standard encryption and complies with the Kenyan Data Protection Act.</div>
+      </div>
+    </div>
+  </div>
+  <div class="auth-right">
+    <div class="auth-right-inner">
+      <div class="auth-img-placeholder">📚</div>
+      <div class="auth-stat-badge">
+        <span class="auth-stat-icon">🎯</span>
+        <div><strong>95% Success</strong><br><small>Scholarship match rate for active profiles.</small></div>
+      </div>
+      <h3>Chart Your Future</h3>
+      <p>Join 50,000+ students who have found their professional calling through our data-driven diagnostic tools.</p>
+      <a href="/profile" class="auth-explore">Explore Pathways →</a>
+    </div>
+  </div>
+</div>
+
+<footer class="ps-footer">
+  <span>© 2026 Career &amp; Scholarship Portal. All rights reserved.</span>
+  <div><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">Help Center</a></div>
+</footer>
+
+<script>
+function togglePwd() {
+  const f = document.getElementById('pwd');
+  f.type = f.type === 'password' ? 'text' : 'password';
+}
+</script>

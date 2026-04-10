@@ -1,0 +1,112 @@
+<div class="auth-register-page">
+  <span class="auth-join-badge">✦ Join the Portal</span>
+  <h2 class="auth-register-title">Create an account</h2>
+  <p class="auth-register-sub">Choose your role and provide your details to access personalized career guidance and scholarship opportunities in Kenya.</p>
+  {{alert}}
+
+  <div class="auth-register-card">
+    <form method="POST" action="/register">
+
+      <p class="auth-role-label">I am a...</p>
+      <div class="auth-role-grid">
+        <label class="auth-role-card selected">
+          <input type="radio" name="role" value="student" checked>
+          <div class="auth-role-inner">
+            <span>👤</span>
+            <strong>Student</strong>
+            <small>High school leavers seeking careers and funding.</small>
+            <span class="auth-role-check">✓</span>
+          </div>
+        </label>
+        <label class="auth-role-card">
+          <input type="radio" name="role" value="counselor">
+          <div class="auth-role-inner">
+            <span>📖</span>
+            <strong>Counselor</strong>
+            <small>Career advisors guiding students through pathways.</small>
+          </div>
+        </label>
+        <label class="auth-role-card">
+          <input type="radio" name="role" value="admin">
+          <div class="auth-role-inner">
+            <span>🛡️</span>
+            <strong>Admin</strong>
+            <small>Institution managers and system supervisors.</small>
+          </div>
+        </label>
+      </div>
+
+      <div class="auth-form-grid">
+        <div class="auth-field">
+          <label>Full Name</label>
+          <input type="text" name="full_name" placeholder="John Doe" required>
+        </div>
+        <div class="auth-field">
+          <label>Work/School Email</label>
+          <input type="email" name="email" placeholder="john@example.com" required>
+        </div>
+        <div class="auth-field">
+          <label>Password</label>
+          <input type="password" name="password" placeholder="••••••••" required>
+        </div>
+        <div class="auth-field">
+          <label>Confirm Password</label>
+          <input type="password" name="confirm_password" placeholder="••••••••" required>
+        </div>
+      </div>
+
+      <div class="auth-student-info" id="student-info">
+        <h4>🎓 Student Information</h4>
+        <div class="auth-form-grid">
+          <div class="auth-field">
+            <label>Current/Previous School</label>
+            <div class="auth-input-wrap">
+              <span>🏫</span>
+              <input type="text" name="school" placeholder="Nairobi High School">
+            </div>
+          </div>
+          <div class="auth-field">
+            <label>Phone Number</label>
+            <div class="auth-input-wrap">
+              <span>📞</span>
+              <input type="tel" name="phone" placeholder="+254 700 000 000">
+            </div>
+          </div>
+        </div>
+        <div class="auth-field" style="margin-top:1rem;">
+          <label>Preferred Study Areas (e.g., Engineering, Law, IT)</label>
+          <input type="text" name="study_areas" placeholder="Comma separated interests">
+        </div>
+      </div>
+
+      <label class="auth-terms">
+        <input type="checkbox" name="agree" required>
+        I agree to the <a href="#">Terms &amp; Conditions</a> and <a href="#">Privacy Policy</a>.<br>
+        <small>Your data is handled securely according to Kenyan Data Protection laws.</small>
+      </label>
+
+      <div class="auth-register-btns">
+        <button type="submit" class="auth-btn-primary">Create account →</button>
+        <a href="/login" class="auth-btn-secondary">Already have an account? Log in</a>
+      </div>
+
+      <p class="auth-secure-note">🔒 Secure 256-bit encrypted signup process</p>
+    </form>
+  </div>
+</div>
+
+<footer class="ps-footer">
+  <span>© 2026 Career &amp; Scholarship Portal. All rights reserved.</span>
+  <div><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">Help Center</a></div>
+</footer>
+
+<script>
+document.querySelectorAll('.auth-role-card input').forEach(radio => {
+  radio.addEventListener('change', () => {
+    document.querySelectorAll('.auth-role-card').forEach(c => c.classList.remove('selected'));
+    radio.closest('.auth-role-card').classList.add('selected');
+    document.getElementById('student-info').style.display =
+      radio.value === 'student' ? 'block' : 'none';
+  });
+});
+</script>

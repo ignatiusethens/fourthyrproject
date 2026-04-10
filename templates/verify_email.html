@@ -1,0 +1,24 @@
+<div class="auth-verify-page">
+  <div class="auth-verify-card">
+    <div class="auth-verify-icon">✉️</div>
+    <span class="auth-verify-badge">✅ Account Created Successfully</span>
+    <h2>Check your email</h2>
+    <p>We've sent a verification link to<br><strong>{{email}}</strong>. Please click the link to confirm your account.</p>
+    <a href="/dashboard" class="auth-btn-primary" style="display:block;text-align:center;margin:1.5rem 0;">Continue to Onboarding →</a>
+    <p class="auth-verify-expiry">⏱ Link expires in 24 hours</p>
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:1.5rem 0;">
+    <div class="auth-verify-resend">
+      <p><strong>Didn't receive the email?</strong><br>Check your spam folder or try resending the link. If the issue persists, contact our support team.</p>
+      <div style="display:flex;gap:1rem;margin-top:1rem;flex-wrap:wrap;">
+        <a href="/resend-verification?email={{email}}" class="auth-btn-secondary">↺ Resend Email</a>
+        <a href="/login" class="auth-btn-secondary">‹ Back to Login</a>
+      </div>
+    </div>
+    <p class="auth-verify-help">Need help? <a href="#">Visit our Help Center</a> or email us at support@careerportal.ke</p>
+  </div>
+</div>
+
+<footer class="ps-footer">
+  <span>© 2026 Career &amp; Scholarship Portal. All rights reserved.</span>
+  <div><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">Help Center</a></div>
+</footer>

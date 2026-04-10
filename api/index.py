@@ -1,3 +1,4 @@
+
 import http.server
 import sqlite3
 import urllib.parse
@@ -5,6 +6,12 @@ import os
 import sys
 import json
 import re
+import hashlib
+import uuid
+import smtplib
+import random
+import time
+from email.mime.text import MIMEText
 
 # Ensure api/ directory is on path so career_database is always found
 sys.path.insert(0, os.path.dirname(__file__))
@@ -35,6 +42,80 @@ def get_db_connection():
         conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     return conn
+
+def init_db():
+    """Ensure all required tables exist."""
+    try:
+        conn = get_db_connection()
+        conn.execute("""CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            full_name TEXT,
+            email TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            role TEXT DEFAULT 'student',
+            school TEXT,
+            phone TEXT,
+            study_areas TEXT,
+            is_verified INTEGER DEFAULT 0,
+            created_at INTEGER DEFAULT 0
+        )""")
+        conn.execute("""CREATE TABLE IF NOT EXISTS sessions (
+            session_id TEXT PRIMARY KEY,
+            user_id INTEGER,
+            created_at INTEGER
+        )""")
+        conn.execute("""CREATE TABLE IF NOT EXISTS verification_tokens (
+            token TEXT PRIMARY KEY,
+            user_id INTEGER,
+            expires_at INTEGER
+        )""")
+        conn.execute("""CREATE TABLE IF NOT EXISTS scholarships (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT, provider TEXT, description TEXT,
+            eligibility_criteria TEXT, deadline TEXT, link TEXT
+        )""")
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
+
+# Run on startup
+init_db()
+
+def hash_password(pw):
+    return hashlib.sha256(pw.encode()).hexdigest()
+
+def send_verification_email(to_email, token):
+    """Send verification email via Gmail SMTP."""
+    gmail_user = os.getenv("GMAIL_USER", "")
+    gmail_pass = os.getenv("GMAIL_APP_PASSWORD", "")
+    if not gmail_user or not gmail_pass:
+        return  # Email not configured, skip silently
+    base_url = os.getenv("BASE_URL", "https://fourthyrproject.vercel.app")
+    link = f"{base_url}/verify?token={token}"
+    msg = MIMEText(f"""
+Hi,
+
+Thanks for registering on the Career & Scholarship Portal.
+
+Click the link below to verify your email address:
+{link}
+
+This link expires in 24 hours.
+
+If you did not create an account, ignore this email.
+
+— Career & Scholarship Portal Team
+    """)
+    msg['Subject'] = 'Verify your Career Portal account'
+    msg['From'] = gmail_user
+    msg['To'] = to_email
+    try:
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+            smtp.login(gmail_user, gmail_pass)
+            smtp.send_message(msg)
+    except Exception:
+        pass  # Fail silently — user can still use the portal
 
 def map_grade(g):
     return GRADE_MAP.get(g, 0)
@@ -128,8 +209,20 @@ class handler(http.server.BaseHTTPRequestHandler):
         cookie_header = self.headers.get('Cookie', '')
         for part in cookie_header.split(';'):
             part = part.strip()
+            if part.startswith('session_id='):
+                session_id = part[len('session_id='):]
+                try:
+                    conn = get_db_connection()
+                    row = conn.execute(
+                        "SELECT u.* FROM users u JOIN sessions s ON u.id=s.user_id WHERE s.session_id=?",
+                        (session_id,)).fetchone()
+                    conn.close()
+                    if row:
+                        return dict(row)
+                except Exception:
+                    pass
             if part.startswith('admin_token=') and part[len('admin_token='):] == 'authenticated':
-                return {'is_admin': 1}
+                return {'is_admin': 1, 'full_name': 'Admin', 'email': ''}
         return None
 
     def render_template(self, template_name, context=None):
@@ -146,12 +239,20 @@ class handler(http.server.BaseHTTPRequestHandler):
         context.setdefault('alert', '')
 
         user = self.get_current_user()
-        if user and user['is_admin'] == 1:
+        if user and user.get('is_admin') == 1:
             context['auth_links'] = '''
-                <li><a href="/admin">Admin Dashboard</a></li>
-                <li><a href="/admin/logout" class="btn-secondary">Log Out</a></li>'''
+                <a href="/admin" class="nav-link">Admin Dashboard</a>
+                <a href="/admin/logout" class="nav-btn-outline">Log Out</a>'''
+        elif user:
+            name = user.get('full_name', 'User')
+            initial = name[0].upper() if name else 'U'
+            context['auth_links'] = f'''
+                <a href="/dashboard" class="nav-avatar" title="{name}">{initial}</a>
+                <a href="/logout" class="nav-btn-outline">Log Out</a>'''
         else:
-            context['auth_links'] = ''
+            context['auth_links'] = '''
+                <a href="/login" class="nav-link">Login</a>
+                <a href="/register" class="nav-btn-primary">Start Your Career Profile</a>'''
 
         try:
             with open(os.path.join(TEMPLATES_DIR, 'base.html'), 'r', encoding='utf-8') as f:
@@ -246,6 +347,80 @@ class handler(http.server.BaseHTTPRequestHandler):
                 'budget':            profile_data.get('budget', '-'),
             }
             self.send_html(self.render_template('profile_step4.html', ctx))
+
+        elif path == '/login':
+            self.send_html(self.render_template('login.html', {'title': 'Log In'}))
+
+        elif path == '/register':
+            self.send_html(self.render_template('register.html', {'title': 'Create Account'}))
+
+        elif path == '/dashboard':
+            if not user:
+                return self.send_redirect('/login')
+            self.send_html(self.render_template('dashboard.html', {
+                'title': 'Dashboard',
+                'user_name': user.get('full_name', 'Student')
+            }))
+
+        elif path == '/logout':
+            cookie_header = self.headers.get('Cookie', '')
+            for part in cookie_header.split(';'):
+                part = part.strip()
+                if part.startswith('session_id='):
+                    sid = part[len('session_id='):]
+                    try:
+                        conn = get_db_connection()
+                        conn.execute("DELETE FROM sessions WHERE session_id=?", (sid,))
+                        conn.commit()
+                        conn.close()
+                    except Exception:
+                        pass
+            self.send_response(302)
+            self.send_header('Location', '/')
+            self.send_header('Set-Cookie', 'session_id=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT')
+            self.end_headers()
+
+        elif path == '/forgot-password':
+            self.send_html(self.render_template('forgot_password.html', {'title': 'Forgot Password'}))
+
+        elif path == '/verify':
+            token = query.get('token', [''])[0]
+            try:
+                conn = get_db_connection()
+                row = conn.execute("SELECT * FROM verification_tokens WHERE token=?", (token,)).fetchone()
+                if row and int(time.time()) < row['expires_at']:
+                    conn.execute("UPDATE users SET is_verified=1 WHERE id=?", (row['user_id'],))
+                    conn.execute("DELETE FROM verification_tokens WHERE token=?", (token,))
+                    conn.commit()
+                    conn.close()
+                    self.send_html(self.render_template('login.html', {
+                        'title': 'Log In',
+                        'alert': '<div class="alert alert-success">Email verified! You can now log in.</div>'
+                    }))
+                else:
+                    conn.close()
+                    self.send_html(self.render_template('login.html', {
+                        'title': 'Log In',
+                        'alert': '<div class="alert alert-error">Verification link is invalid or expired.</div>'
+                    }))
+            except Exception:
+                self.send_redirect('/login')
+
+        elif path == '/resend-verification':
+            email = query.get('email', [''])[0]
+            try:
+                conn = get_db_connection()
+                u = conn.execute("SELECT * FROM users WHERE email=?", (email,)).fetchone()
+                if u and not u['is_verified']:
+                    token = str(uuid.uuid4())
+                    conn.execute("INSERT OR REPLACE INTO verification_tokens (token, user_id, expires_at) VALUES (?,?,?)",
+                                 (token, u['id'], int(time.time()) + 86400))
+                    conn.commit()
+                    send_verification_email(email, token)
+                conn.close()
+            except Exception:
+                pass
+            self.send_html(self.render_template('verify_email.html', {'title': 'Check Your Email', 'email': email}))
 
         elif path == '/scholarships':
             search = query.get('q', [''])[0]
@@ -391,6 +566,100 @@ class handler(http.server.BaseHTTPRequestHandler):
                     'title': 'Admin Login',
                     'alert': '<div class="alert alert-error">Invalid password.</div>'
                 }))
+
+        elif path == '/register':
+            full_name = get_val('full_name')
+            email     = get_val('email')
+            password  = get_val('password')
+            confirm   = get_val('confirm_password')
+            role      = get_val('role') or 'student'
+            school    = get_val('school')
+            phone     = get_val('phone')
+            study_areas = get_val('study_areas')
+
+            if not full_name or not email or not password:
+                self.send_html(self.render_template('register.html', {
+                    'title': 'Create Account',
+                    'alert': '<div class="alert alert-error">Please fill in all required fields.</div>'
+                }))
+                return
+            if password != confirm:
+                self.send_html(self.render_template('register.html', {
+                    'title': 'Create Account',
+                    'alert': '<div class="alert alert-error">Passwords do not match.</div>'
+                }))
+                return
+            try:
+                conn = get_db_connection()
+                conn.execute("""INSERT INTO users (full_name, email, password, role, school, phone, study_areas, created_at)
+                                VALUES (?,?,?,?,?,?,?,?)""",
+                             (full_name, email, hash_password(password), role, school, phone, study_areas, int(time.time())))
+                conn.commit()
+                user_id = conn.execute("SELECT id FROM users WHERE email=?", (email,)).fetchone()['id']
+                token = str(uuid.uuid4())
+                conn.execute("INSERT INTO verification_tokens (token, user_id, expires_at) VALUES (?,?,?)",
+                             (token, user_id, int(time.time()) + 86400))
+                conn.commit()
+                conn.close()
+                send_verification_email(email, token)
+                self.send_html(self.render_template('verify_email.html', {'title': 'Check Your Email', 'email': email}))
+            except sqlite3.IntegrityError:
+                self.send_html(self.render_template('register.html', {
+                    'title': 'Create Account',
+                    'alert': '<div class="alert alert-error">An account with this email already exists.</div>'
+                }))
+            except Exception as e:
+                self.send_html(self.render_template('register.html', {
+                    'title': 'Create Account',
+                    'alert': f'<div class="alert alert-error">Registration failed. Please try again.</div>'
+                }))
+
+        elif path == '/login':
+            email    = get_val('email')
+            password = get_val('password')
+            try:
+                conn = get_db_connection()
+                u = conn.execute("SELECT * FROM users WHERE email=?", (email,)).fetchone()
+                if u and u['password'] == hash_password(password):
+                    sid = str(uuid.uuid4())
+                    conn.execute("INSERT INTO sessions (session_id, user_id, created_at) VALUES (?,?,?)",
+                                 (sid, u['id'], int(time.time())))
+                    conn.commit()
+                    conn.close()
+                    self.send_response(302)
+                    self.send_header('Location', '/dashboard')
+                    self.send_header('Set-Cookie', f'session_id={sid}; Path=/; HttpOnly')
+                    self.end_headers()
+                else:
+                    conn.close()
+                    self.send_html(self.render_template('login.html', {
+                        'title': 'Log In',
+                        'alert': '<div class="alert alert-error">Invalid email or password.</div>'
+                    }))
+            except Exception:
+                self.send_html(self.render_template('login.html', {
+                    'title': 'Log In',
+                    'alert': '<div class="alert alert-error">Login failed. Please try again.</div>'
+                }))
+
+        elif path == '/forgot-password':
+            email = get_val('email')
+            try:
+                conn = get_db_connection()
+                u = conn.execute("SELECT * FROM users WHERE email=?", (email,)).fetchone()
+                if u:
+                    token = str(uuid.uuid4())
+                    conn.execute("INSERT OR REPLACE INTO verification_tokens (token, user_id, expires_at) VALUES (?,?,?)",
+                                 (token, u['id'], int(time.time()) + 3600))
+                    conn.commit()
+                    send_verification_email(email, token)
+                conn.close()
+            except Exception:
+                pass
+            self.send_html(self.render_template('forgot_password.html', {
+                'title': 'Forgot Password',
+                'alert': '<div class="alert alert-success">If that email exists, a reset link has been sent.</div>'
+            }))
 
         elif path == '/profile/step1':
             save_step({

@@ -1,0 +1,94 @@
+<div class="dash-wrapper">
+  <h1 class="dash-title">Welcome to the Portal</h1>
+  <p class="dash-sub">Let's set up your profile to discover the best career and scholarship pathways for you.</p>
+
+  <div class="dash-tabs">
+    <button class="dash-tab active" onclick="switchTab('student')">Student View</button>
+    <button class="dash-tab" onclick="switchTab('staff')">Staff View</button>
+  </div>
+
+  <div class="dash-layout" id="student-view">
+    <div class="dash-main">
+      <div class="dash-profile-card">
+        <div class="dash-profile-header">
+          <h3>Complete Your Profile</h3>
+          <span class="dash-progress-label">0% Complete</span>
+        </div>
+        <div class="dash-progress-bar"><div class="dash-progress-fill" style="width:0%"></div></div>
+
+        <div class="dash-task">
+          <div class="dash-task-icon">👤</div>
+          <div class="dash-task-info">
+            <strong>Basic Information</strong>
+            <p>Add your contact details, education background, and location.</p>
+          </div>
+          <span class="dash-task-status">To Do</span>
+          <input type="checkbox" disabled>
+        </div>
+        <div class="dash-task">
+          <div class="dash-task-icon">🧭</div>
+          <div class="dash-task-info">
+            <strong>Career Interests</strong>
+            <p>Tell us about the fields and subjects that excite you most.</p>
+          </div>
+          <span class="dash-task-status">To Do</span>
+          <input type="checkbox" disabled>
+        </div>
+        <div class="dash-task">
+          <div class="dash-task-icon">📋</div>
+          <div class="dash-task-info">
+            <strong>Career Diagnostic Test</strong>
+            <p>Take a 15-minute assessment to identify your strengths and aptitudes.</p>
+          </div>
+          <span class="dash-task-status">To Do</span>
+          <input type="checkbox" disabled>
+        </div>
+
+        <a href="/profile/step1" class="auth-btn-primary" style="display:inline-block;margin-top:1.5rem;">Start Profiling →</a>
+      </div>
+
+      <div class="dash-tip-card">
+        <span style="color:#3b82f6;font-weight:700;">💡 Pro Tip</span>
+        <p>Students who complete their profile are 3x more likely to match with scholarships that fit their unique skill set and financial needs.</p>
+      </div>
+    </div>
+
+    <div class="dash-sidebar">
+      <div class="dash-help-card">
+        <h4>Need Help?</h4>
+        <p>Our support team is available to help you navigate your career journey. Access guides, FAQs, or contact a counselor.</p>
+        <a href="#">→ User Guide for Students</a>
+        <a href="#">→ FAQs about Scholarships</a>
+        <a href="#">→ Connect with a Mentor</a>
+      </div>
+      <div class="dash-privacy-card">
+        <h4>🛡️ Data Privacy</h4>
+        <p>Your data is encrypted and used solely for generating career recommendations and matching you with scholarships. We do not sell your personal information to third parties.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-layout" id="staff-view" style="display:none;">
+    <div class="dash-main">
+      <div class="dash-profile-card">
+        <h3>Staff Dashboard</h3>
+        <p style="color:#6b7280;margin-top:0.5rem;">Manage students, view analytics, and update scholarship listings.</p>
+        <a href="/admin" class="auth-btn-primary" style="display:inline-block;margin-top:1.5rem;">Go to Admin Panel →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="ps-footer">
+  <span>© 2026 Career &amp; Scholarship Portal. All rights reserved.</span>
+  <div><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">Help Center</a></div>
+</footer>
+
+<script>
+function switchTab(tab) {
+  document.querySelectorAll('.dash-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('student-view').style.display = tab === 'student' ? 'flex' : 'none';
+  document.getElementById('staff-view').style.display   = tab === 'staff'   ? 'flex' : 'none';
+}
+</script>
