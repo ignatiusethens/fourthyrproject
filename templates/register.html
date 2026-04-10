@@ -47,11 +47,19 @@
         </div>
         <div class="auth-field">
           <label>Password</label>
-          <input type="password" name="password" placeholder="••••••••" required>
+          <div class="auth-input-wrap">
+            <span>🔒</span>
+            <input type="password" name="password" id="reg-pwd" placeholder="••••••••" required>
+            <button type="button" onclick="toggleField('reg-pwd')" class="auth-eye">👁</button>
+          </div>
         </div>
         <div class="auth-field">
           <label>Confirm Password</label>
-          <input type="password" name="confirm_password" placeholder="••••••••" required>
+          <div class="auth-input-wrap">
+            <span>🔒</span>
+            <input type="password" name="confirm_password" id="reg-pwd2" placeholder="••••••••" required>
+            <button type="button" onclick="toggleField('reg-pwd2')" class="auth-eye">👁</button>
+          </div>
         </div>
       </div>
 
@@ -101,6 +109,10 @@
 </footer>
 
 <script>
+function toggleField(id) {
+  const f = document.getElementById(id);
+  f.type = f.type === 'password' ? 'text' : 'password';
+}
 document.querySelectorAll('.auth-role-card input').forEach(radio => {
   radio.addEventListener('change', () => {
     document.querySelectorAll('.auth-role-card').forEach(c => c.classList.remove('selected'));

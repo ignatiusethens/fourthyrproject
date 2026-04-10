@@ -681,17 +681,17 @@ class handler(http.server.BaseHTTPRequestHandler):
                 email_sent = send_verification_email(email, token)
                 alert = ''
                 if not email_sent:
-                    alert = '<div class="alert alert-success" style="background:#fff3e0;color:#e65100;border-color:#ffe0b2;">Account created! Email sending is not configured yet — ask the admin to verify your account manually.</div>'
+                    alert = '<div class="alert alert-success" style="background:#fff3e0;color:#e65100;border-color:#ffe0b2;">Account created! Verification email could not be sent — you can still log in.</div>'
                 self.send_html(self.render_template('verify_email.html', {'title': 'Check Your Email', 'email': email, 'alert': alert}))
-            except sqlite3.IntegrityError:
-                self.send_html(self.render_template('register.html', {
-                    'title': 'Create Account',
-                    'alert': '<div class="alert alert-error">An account with this email already exists.</div>'
-                }))
             except Exception as e:
+                err = str(e)
+                if 'unique' in err.lower() or 'duplicate' in err.lower():
+                    msg = 'An account with this email already exists.'
+                else:
+                    msg = f'Registration failed: {err}'
                 self.send_html(self.render_template('register.html', {
                     'title': 'Create Account',
-                    'alert': f'<div class="alert alert-error">Registration failed. Please try again.</div>'
+                    'alert': f'<div class="alert alert-error">{msg}</div>'
                 }))
 
         elif path == '/login':
