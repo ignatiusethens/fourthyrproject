@@ -6,7 +6,7 @@
         
         <h3 style="margin-top: 2rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">Section 1: Academic Grades</h3>
         
-        <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="grid-2">
             <div class="form-group">
                 <label for="math_grade">Mathematics</label>
                 <select id="math_grade" name="math_grade" required>
@@ -49,7 +49,7 @@
         </div>
 
         <h4 style="margin-top: 1rem;">Core Sciences</h4>
-        <div class="grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+        <div class="grid-3">
             <div class="form-group">
                 <label for="biology_grade">Biology</label>
                 <select id="biology_grade" name="biology_grade" required>
@@ -131,8 +131,8 @@
 
         <h3 style="margin-top: 2rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">Section 4: Goals & Motivation</h3>
 
-        <div class="form-group" style="display:flex; gap:1rem;">
-            <div style="flex: 1;">
+        <div class="flex-row form-group">
+            <div class="flex-1">
                 <label for="education_goal">Immediate Higher Education Goal</label>
                 <select id="education_goal" name="education_goal" required>
                     <option value="">Select Option</option>
@@ -142,7 +142,7 @@
                 </select>
             </div>
             
-            <div style="flex: 1;">
+            <div class="flex-1">
                 <label for="motivation">Primary Career Motivation</label>
                 <select id="motivation" name="motivation" required>
                     <option value="">Select Option</option>

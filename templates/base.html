@@ -15,22 +15,21 @@
 <body>
     <nav class="navbar">
         <a href="/" class="logo">
-            <span class="logo-accent">Career</span> Guidance
+            <span class="logo-accent">🎓 Career</span> &amp; Scholarship Portal
         </a>
         <ul class="nav-links">
             <li><a href="/">Home</a></li>
             <li><a href="/profile">Career Profiling</a></li>
             <li><a href="/scholarships">Scholarships</a></li>
+            <li><a href="#">Data &amp; Insights</a></li>
+            <li><a href="#">Contact</a></li>
             {{auth_links}}
+            <li><a href="/profile" class="btn-login">Start Your Career Profile</a></li>
         </ul>
     </nav>
 
-    <main class="container">
+    <main>
         {{content}}
     </main>
-
-    <footer>
-        <p>&copy; 2026 Career Guidance Portal. All Rights Reserved.</p>
-    </footer>
 </body>
 </html>
