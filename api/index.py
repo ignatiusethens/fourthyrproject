@@ -139,7 +139,7 @@ class handler(http.server.BaseHTTPRequestHandler):
             self.send_html(self.render_template('admin_login.html', {'title': 'Admin Login'}))
             
         elif path == '/admin/logout':
-            self.send_redirect('/', session_id='', admin_logout=True)
+            self.send_redirect('/', clear_admin=True)
             
         elif path == '/profile':
             self.send_html(self.render_template('profile_intro.html', {'title': 'Career Profiling'}))
@@ -186,23 +186,6 @@ class handler(http.server.BaseHTTPRequestHandler):
             }
             self.send_html(self.render_template('profile_step4.html', ctx))
 
-        elif path == '/recommendations':
-                
-            math = user['math_grade']
-            sciences = user['sciences_grade']
-            interests = user['interests']
-            grade_map = {'A':12, 'A-':11, 'B+':10, 'B':9, 'B-':8, 'C+':7, 'C':6, 'C-':5, 'D+':4, 'D':3, 'D-':2, 'E':1}
-            def map_grade(g): return grade_map.get(g, 0)
-            
-            recs = ""
-            level_msg = ""
-            if not math or not sciences or math == 'Select Grade':
-                recs = "<p style='text-align:center;'>Please update your profile to see recommendations.</p>"
-                mean_grade = 0
-            else:
-                total_pts = map_grade(math) + map_grade(sciences) + map_grade(user['english_grade']) + map_grade(user['humanities_grade'])
-                mean_grade = total_pts / 4.0
-                
         elif path == '/recommendations':
             self.send_redirect('/profile')
             
