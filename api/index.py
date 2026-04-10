@@ -136,8 +136,8 @@ def hash_password(pw):
 
 def send_verification_email(to_email, token):
     """Send verification email via Gmail SMTP."""
-    gmail_user = os.getenv("GMAIL_USER", "")
-    gmail_pass = os.getenv("GMAIL_APP_PASSWORD", "")
+    gmail_user = os.getenv("careerapp_gmail", "")
+    gmail_pass = os.getenv("careerapps_password", "")
     if not gmail_user or not gmail_pass:
         return False  # Not configured
     base_url = os.getenv("BASE_URL", "https://fourthyrproject.vercel.app")
@@ -521,8 +521,8 @@ class handler(http.server.BaseHTTPRequestHandler):
         elif path == '/debug-env':
             db_url = os.getenv("Careerdatabase_URL", "NOT SET")
             masked = db_url[:30] + "..." if len(db_url) > 30 else db_url
-            gmail = os.getenv("GMAIL_USER", "NOT SET")
-            gmail_pass = "SET" if os.getenv("GMAIL_APP_PASSWORD") else "NOT SET"
+            gmail = os.getenv("careerapp_gmail", "NOT SET")
+            gmail_pass = "SET" if os.getenv("careerapps_password") else "NOT SET"
             self.send_html(f"""<pre>
 Careerdatabase_URL = {masked}
 PG_AVAILABLE = {PG_AVAILABLE}
