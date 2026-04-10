@@ -509,6 +509,15 @@ class handler(http.server.BaseHTTPRequestHandler):
                 pass
             self.send_html(self.render_template('verify_email.html', {'title': 'Check Your Email', 'email': email}))
 
+        elif path == '/debug-env':
+            db_url = os.getenv("Careerdatabase_URL", "NOT SET")
+            masked = db_url[:30] + "..." if len(db_url) > 30 else db_url
+            self.send_html(f"""<pre>
+Careerdatabase_URL = {masked}
+PSYCOPG2_AVAILABLE = {PSYCOPG2_AVAILABLE}
+is_postgres() = {is_postgres()}
+</pre>""".encode())
+
         elif path == '/scholarships':
             search = query.get('q', [''])[0]
             try:
