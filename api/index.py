@@ -137,29 +137,29 @@ except Exception:
 def hash_password(pw):
     return hashlib.sha256(pw.encode()).hexdigest()
 
-def send_verification_email(to_email, token):
-    """Send verification email via Gmail SMTP."""
+def generate_otp():
+    """Generate a 6-digit OTP code."""
+    return str(random.randint(100000, 999999))
+
+def send_otp_email(to_email, code):
+    """Send a 6-digit OTP via Gmail SMTP."""
     gmail_user = os.getenv("careerapp_gmail", "")
     gmail_pass = os.getenv("careerapps_password", "")
     if not gmail_user or not gmail_pass:
-        return False  # Not configured
-    base_url = os.getenv("BASE_URL", "https://fourthyrproject.vercel.app")
-    link = f"{base_url}/verify?token={token}"
+        return False
     body = f"""Hi,
 
-Thanks for registering on the Career & Scholarship Portal.
+Your Career & Scholarship Portal verification code is:
 
-Click the link below to verify your email address:
-{link}
+    {code}
 
-This link expires in 24 hours.
+This code expires in 10 minutes.
 
 If you did not create an account, please ignore this email.
 
-— Career & Scholarship Portal Team
-support@careerportal.ke"""
+— Career & Scholarship Portal Team"""
     msg = MIMEText(body)
-    msg['Subject'] = 'Verify your Career & Scholarship Portal account'
+    msg['Subject'] = f'{code} is your Career Portal verification code'
     msg['From'] = f"Career Portal <{gmail_user}>"
     msg['To'] = to_email
     try:
@@ -167,8 +167,6 @@ support@careerportal.ke"""
             smtp.login(gmail_user, gmail_pass)
             smtp.send_message(msg)
         return True
-    except smtplib.SMTPAuthenticationError:
-        return False  # Wrong credentials
     except Exception:
         return False
 
@@ -484,6 +482,35 @@ class handler(http.server.BaseHTTPRequestHandler):
         elif path == '/forgot-password':
             self.send_html(self.render_template('forgot_password.html', {'title': 'Forgot Password'}))
 
+        elif path == '/verify-otp':
+            token = query.get('token', [''])[0]
+            email_q = query.get('email', [''])[0]
+            self.send_html(self.render_template('verify_otp.html', {
+                'title': 'Enter Verification Code',
+                'email': email_q,
+                'alert': ''
+            }))
+
+        elif path == '/resend-otp':
+            email = query.get('email', [''])[0]
+            try:
+                conn = get_db_connection()
+                u = db_fetchone(conn, f"SELECT * FROM users WHERE email={ph()}", (email,))
+                if u and not u.get('is_verified'):
+                    otp = generate_otp()
+                    db_execute(conn, f"DELETE FROM verification_tokens WHERE user_id={ph()}", (u['id'],))
+                    db_execute(conn, f"INSERT INTO verification_tokens (token, user_id, expires_at) VALUES ({ph()},{ph()},{ph()})",
+                               (otp, u['id'], int(time.time()) + 600))
+                    send_otp_email(email, otp)
+                conn.close()
+            except Exception:
+                pass
+            self.send_html(self.render_template('verify_otp.html', {
+                'title': 'Enter Verification Code',
+                'email': email,
+                'alert': '<div class="alert alert-success">A new code has been sent to your email.</div>'
+            }))
+
         elif path == '/verify':
             token = query.get('token', [''])[0]
             try:
@@ -717,15 +744,15 @@ GMAIL_APP_PASSWORD = {gmail_pass}
                              (full_name, email, hash_password(password), role, school, phone, study_areas, int(time.time())))
                 user_row = db_fetchone(conn, f"SELECT id FROM users WHERE email={ph()}", (email,))
                 user_id = user_row['id']
-                token = str(uuid.uuid4())
+                otp = generate_otp()
                 db_execute(conn, f"INSERT INTO verification_tokens (token, user_id, expires_at) VALUES ({ph()},{ph()},{ph()})",
-                             (token, user_id, int(time.time()) + 86400))
+                             (otp, user_id, int(time.time()) + 600))
                 conn.close()
-                email_sent = send_verification_email(email, token)
+                email_sent = send_otp_email(email, otp)
                 alert = ''
                 if not email_sent:
-                    alert = '<div class="alert alert-success" style="background:#fff3e0;color:#e65100;border-color:#ffe0b2;">Account created! Verification email could not be sent — you can still log in.</div>'
-                self.send_html(self.render_template('verify_email.html', {'title': 'Check Your Email', 'email': email, 'alert': alert}))
+                    alert = f'<div class="alert alert-success" style="background:#fff3e0;color:#e65100;border-color:#ffe0b2;">Account created! Email could not be sent. Your code is: <strong>{otp}</strong></div>'
+                self.send_html(self.render_template('verify_otp.html', {'title': 'Enter Verification Code', 'email': email, 'alert': alert}))
             except Exception as e:
                 err = str(e)
                 if 'unique' in err.lower() or 'duplicate' in err.lower():
@@ -770,6 +797,43 @@ GMAIL_APP_PASSWORD = {gmail_pass}
                 self.send_html(self.render_template('login.html', {
                     'title': 'Log In',
                     'alert': f'<div class="alert alert-error">Login failed: {str(e)}</div>'
+                }))
+
+        elif path == '/verify-otp':
+            email = get_val('email')
+            otp = get_val('d1') + get_val('d2') + get_val('d3') + get_val('d4') + get_val('d5') + get_val('d6')
+            try:
+                conn = get_db_connection()
+                u = db_fetchone(conn, f"SELECT * FROM users WHERE email={ph()}", (email,))
+                if u:
+                    row = db_fetchone(conn, f"SELECT * FROM verification_tokens WHERE user_id={ph()} AND token={ph()}", (u['id'], otp))
+                    if row and int(time.time()) < row['expires_at']:
+                        db_execute(conn, f"UPDATE users SET is_verified=1 WHERE email={ph()}", (email,))
+                        db_execute(conn, f"DELETE FROM verification_tokens WHERE token={ph()}", (otp,))
+                        conn.close()
+                        self.send_html(self.render_template('login.html', {
+                            'title': 'Log In',
+                            'alert': '<div class="alert alert-success">✅ Email verified! You can now log in.</div>'
+                        }))
+                    else:
+                        conn.close()
+                        self.send_html(self.render_template('verify_otp.html', {
+                            'title': 'Enter Verification Code',
+                            'email': email,
+                            'alert': '<div class="alert alert-error">Invalid or expired code. Request a new one below.</div>'
+                        }))
+                else:
+                    conn.close()
+                    self.send_html(self.render_template('verify_otp.html', {
+                        'title': 'Enter Verification Code',
+                        'email': email,
+                        'alert': '<div class="alert alert-error">Email not found.</div>'
+                    }))
+            except Exception as e:
+                self.send_html(self.render_template('verify_otp.html', {
+                    'title': 'Enter Verification Code',
+                    'email': email,
+                    'alert': f'<div class="alert alert-error">Verification failed: {str(e)}</div>'
                 }))
 
         elif path == '/forgot-password':

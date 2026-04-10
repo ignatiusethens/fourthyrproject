@@ -1229,3 +1229,9 @@ main { width: 100%; }
   .lp-steps-grid { grid-template-columns:1fr; }
   .lp-cta-inner { flex-direction:column; text-align:center; }
 }
+
+/* OTP Input */
+.otp-input-group { display:flex; gap:0.75rem; justify-content:center; margin:1.5rem 0 0.5rem; }
+.otp-box { width:52px; height:60px; border:2px solid #d1d5db; border-radius:10px; font-size:1.6rem; font-weight:700; text-align:center; font-family:var(--font-family); transition:border-color 0.2s; }
+.otp-box:focus { outline:none; border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,0.15); }
+@media(max-width:400px) { .otp-box { width:40px; height:50px; font-size:1.3rem; } .otp-input-group { gap:0.4rem; } }

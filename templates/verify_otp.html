@@ -1,0 +1,58 @@
+<div class="auth-verify-page">
+  <div class="auth-verify-card">
+    <div class="auth-verify-icon">✉️</div>
+    <span class="auth-verify-badge">✅ Account Created Successfully</span>
+    <h2>Check your email</h2>
+    <p>We've sent a 6-digit verification code to<br><strong>{{email}}</strong>.<br>Enter it below to confirm your account.</p>
+
+    {{alert}}
+
+    <form method="POST" action="/verify-otp" style="margin-top:1.5rem;">
+      <input type="hidden" name="email" value="{{email}}">
+      <div class="otp-input-group">
+        <input type="text" name="d1" maxlength="1" class="otp-box" oninput="otpNext(this,1)" onkeydown="otpBack(event,this,0)" autofocus>
+        <input type="text" name="d2" maxlength="1" class="otp-box" oninput="otpNext(this,2)" onkeydown="otpBack(event,this,1)">
+        <input type="text" name="d3" maxlength="1" class="otp-box" oninput="otpNext(this,3)" onkeydown="otpBack(event,this,2)">
+        <input type="text" name="d4" maxlength="1" class="otp-box" oninput="otpNext(this,4)" onkeydown="otpBack(event,this,3)">
+        <input type="text" name="d5" maxlength="1" class="otp-box" oninput="otpNext(this,5)" onkeydown="otpBack(event,this,4)">
+        <input type="text" name="d6" maxlength="1" class="otp-box" oninput="otpNext(this,6)" onkeydown="otpBack(event,this,5)">
+      </div>
+      <p class="auth-verify-expiry">⏱ Code expires in 10 minutes</p>
+      <button type="submit" class="auth-btn-primary" style="margin-top:1rem;">Verify Account</button>
+    </form>
+
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:1.5rem 0;">
+
+    <div class="auth-verify-resend">
+      <p><strong>Didn't receive the code?</strong><br>Check your spam folder or resend a new code.</p>
+      <div style="display:flex;gap:1rem;margin-top:1rem;flex-wrap:wrap;">
+        <a href="/resend-otp?email={{email}}" class="auth-btn-secondary">↺ Resend Code</a>
+        <a href="/login" class="auth-btn-secondary">‹ Back to Login</a>
+      </div>
+    </div>
+    <p class="auth-verify-help">Need help? Email us at support@careerportal.ke</p>
+  </div>
+</div>
+
+<footer class="ps-footer">
+  <span>© 2026 Career &amp; Scholarship Portal. All rights reserved.</span>
+  <div><a href="#">Privacy Policy</a><a href="#">Terms of Service</a><a href="#">Help Center</a></div>
+</footer>
+
+<script>
+const boxes = document.querySelectorAll('.otp-box');
+function otpNext(el, idx) {
+  el.value = el.value.replace(/[^0-9]/g, '');
+  if (el.value && idx < 6) boxes[idx].focus();
+}
+function otpBack(e, el, prevIdx) {
+  if (e.key === 'Backspace' && !el.value && prevIdx >= 0) boxes[prevIdx].focus();
+}
+// Allow paste of full 6-digit code
+boxes[0].addEventListener('paste', function(e) {
+  const text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6);
+  text.split('').forEach((c,i) => { if(boxes[i]) boxes[i].value = c; });
+  if(boxes[text.length-1]) boxes[text.length-1].focus();
+  e.preventDefault();
+});
+</script>
