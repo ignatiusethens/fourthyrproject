@@ -521,10 +521,14 @@ class handler(http.server.BaseHTTPRequestHandler):
         elif path == '/debug-env':
             db_url = os.getenv("Careerdatabase_URL", "NOT SET")
             masked = db_url[:30] + "..." if len(db_url) > 30 else db_url
+            gmail = os.getenv("GMAIL_USER", "NOT SET")
+            gmail_pass = "SET" if os.getenv("GMAIL_APP_PASSWORD") else "NOT SET"
             self.send_html(f"""<pre>
 Careerdatabase_URL = {masked}
 PG_AVAILABLE = {PG_AVAILABLE}
 is_postgres() = {is_postgres()}
+GMAIL_USER = {gmail}
+GMAIL_APP_PASSWORD = {gmail_pass}
 </pre>""".encode())
 
         elif path == '/scholarships':
@@ -727,6 +731,14 @@ is_postgres() = {is_postgres()}
                 conn = get_db_connection()
                 u = db_fetchone(conn, f"SELECT * FROM users WHERE email={ph()}", (email,))
                 if u and u['password'] == hash_password(password):
+                    # Block unverified users
+                    if not u.get('is_verified'):
+                        conn.close()
+                        self.send_html(self.render_template('login.html', {
+                            'title': 'Log In',
+                            'alert': f'<div class="alert alert-error">Please verify your email first. <a href="/resend-verification?email={email}" style="color:#b91c1c;font-weight:700;">Resend verification email</a></div>'
+                        }))
+                        return
                     sid = str(uuid.uuid4())
                     db_execute(conn, f"INSERT INTO sessions (session_id, user_id, created_at) VALUES ({ph()},{ph()},{ph()})",
                                  (sid, u['id'], int(time.time())))
@@ -741,10 +753,10 @@ is_postgres() = {is_postgres()}
                         'title': 'Log In',
                         'alert': '<div class="alert alert-error">Invalid email or password.</div>'
                     }))
-            except Exception:
+            except Exception as e:
                 self.send_html(self.render_template('login.html', {
                     'title': 'Log In',
-                    'alert': '<div class="alert alert-error">Login failed. Please try again.</div>'
+                    'alert': f'<div class="alert alert-error">Login failed: {str(e)}</div>'
                 }))
 
         elif path == '/forgot-password':
