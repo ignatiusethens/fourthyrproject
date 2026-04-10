@@ -173,6 +173,17 @@ If you did not create an account, please ignore this email.
 def map_grade(g):
     return GRADE_MAP.get(g, 0)
 
+def parse_profile_cookie(cookie_header):
+    """Extract profile_data dict from cookie header string."""
+    for part in cookie_header.split(';'):
+        part = part.strip()
+        if part.startswith('profile_data='):
+            try:
+                return json.loads(urllib.parse.unquote(part[len('profile_data='):]))
+            except Exception:
+                pass
+    return {}
+
 def db_query(conn, sql, params=()):
     """Execute a query and return all rows as list of dicts."""
     if is_postgres():
