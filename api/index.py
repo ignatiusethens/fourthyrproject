@@ -22,11 +22,11 @@ except ImportError:
     CAREERS = []
 
 try:
-    import psycopg2
-    import psycopg2.extras
-    PSYCOPG2_AVAILABLE = True
+    import pg8000
+    import pg8000.native
+    PG_AVAILABLE = True
 except ImportError:
-    PSYCOPG2_AVAILABLE = False
+    PG_AVAILABLE = False
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 DATABASE = os.path.join(BASE_DIR, "database.db")
@@ -35,7 +35,7 @@ TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 GRADE_MAP = {'A':12,'A-':11,'B+':10,'B':9,'B-':8,'C+':7,'C':6,'C-':5,'D+':4,'D':3,'D-':2,'E':1,'':0}
 
 def is_postgres():
-    return bool(os.getenv("Careerdatabase_URL") and PSYCOPG2_AVAILABLE)
+    return bool(os.getenv("Careerdatabase_URL") and PG_AVAILABLE)
 
 def ph():
     """SQL placeholder: %s for Postgres, ? for SQLite."""
@@ -44,8 +44,18 @@ def ph():
 def get_db_connection():
     """Return a Neon PostgreSQL connection if configured, else local SQLite."""
     db_url = os.getenv("Careerdatabase_URL")
-    if db_url and PSYCOPG2_AVAILABLE:
-        conn = psycopg2.connect(db_url, cursor_factory=psycopg2.extras.RealDictCursor)
+    if db_url and PG_AVAILABLE:
+        # pg8000 needs the URL parsed manually
+        import urllib.parse as _up
+        r = _up.urlparse(db_url)
+        conn = pg8000.connect(
+            host=r.hostname,
+            port=r.port or 5432,
+            database=r.path.lstrip('/'),
+            user=r.username,
+            password=r.password,
+            ssl_context=True
+        )
         return conn
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
@@ -166,21 +176,19 @@ def db_query(conn, sql, params=()):
     """Execute a query and return all rows as list of dicts."""
     if is_postgres():
         cur = conn.cursor()
-        cur.execute(sql, params)
-        try:
-            rows = cur.fetchall()
-        except Exception:
-            rows = []
+        cur.execute(sql, list(params))
+        cols = [d[0] for d in cur.description] if cur.description else []
+        rows = [dict(zip(cols, row)) for row in cur.fetchall()]
         cur.close()
         return rows
     else:
-        return conn.execute(sql, params).fetchall()
+        return [dict(r) for r in conn.execute(sql, params).fetchall()]
 
 def db_execute(conn, sql, params=()):
     """Execute a write query (INSERT/UPDATE/DELETE)."""
     if is_postgres():
         cur = conn.cursor()
-        cur.execute(sql, params)
+        cur.execute(sql, list(params))
         conn.commit()
         cur.close()
     else:
@@ -191,10 +199,11 @@ def db_fetchone(conn, sql, params=()):
     """Execute a query and return one row as dict."""
     if is_postgres():
         cur = conn.cursor()
-        cur.execute(sql, params)
+        cur.execute(sql, list(params))
+        cols = [d[0] for d in cur.description] if cur.description else []
         row = cur.fetchone()
         cur.close()
-        return dict(row) if row else None
+        return dict(zip(cols, row)) if row else None
     else:
         row = conn.execute(sql, params).fetchone()
         return dict(row) if row else None
@@ -203,7 +212,7 @@ def db_lastid(conn, table='users'):
     """Get last inserted ID."""
     if is_postgres():
         cur = conn.cursor()
-        cur.execute(f"SELECT lastval()")
+        cur.execute("SELECT lastval()")
         row = cur.fetchone()
         cur.close()
         return row[0] if row else None
@@ -514,7 +523,7 @@ class handler(http.server.BaseHTTPRequestHandler):
             masked = db_url[:30] + "..." if len(db_url) > 30 else db_url
             self.send_html(f"""<pre>
 Careerdatabase_URL = {masked}
-PSYCOPG2_AVAILABLE = {PSYCOPG2_AVAILABLE}
+PG_AVAILABLE = {PG_AVAILABLE}
 is_postgres() = {is_postgres()}
 </pre>""".encode())
 
