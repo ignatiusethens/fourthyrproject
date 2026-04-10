@@ -77,8 +77,16 @@ def init_db():
                 phone TEXT,
                 study_areas TEXT,
                 is_verified INTEGER DEFAULT 0,
-                created_at BIGINT DEFAULT 0
+                created_at BIGINT DEFAULT 0,
+                profile_data TEXT,
+                last_results TEXT
             )""")
+            # Add columns if they don't exist (migration)
+            for col in ['profile_data TEXT', 'last_results TEXT']:
+                try:
+                    cur.execute(f"ALTER TABLE users ADD COLUMN {col}")
+                except Exception:
+                    pass
             cur.execute("""CREATE TABLE IF NOT EXISTS sessions (
                 session_id TEXT PRIMARY KEY,
                 user_id INTEGER,
@@ -110,7 +118,8 @@ def init_db():
                 full_name TEXT, email TEXT UNIQUE NOT NULL,
                 password TEXT NOT NULL, role TEXT DEFAULT 'student',
                 school TEXT, phone TEXT, study_areas TEXT,
-                is_verified INTEGER DEFAULT 0, created_at INTEGER DEFAULT 0
+                is_verified INTEGER DEFAULT 0, created_at INTEGER DEFAULT 0,
+                profile_data TEXT, last_results TEXT
             )""")
             conn.execute("""CREATE TABLE IF NOT EXISTS sessions (
                 session_id TEXT PRIMARY KEY, user_id INTEGER, created_at INTEGER
@@ -243,8 +252,9 @@ def db_lastid(conn, table='users'):
     return {}
 
 def run_algorithm(profile_data):
-    """Run the career recommendation algorithm from profile_data dict.
-    Returns (recs_html, level_msg_html, mean_grade, user_inputs)."""
+    """Run the career recommendation algorithm.
+    Returns (scored_careers, mean_grade, study_level, user_inputs)
+    scored_careers = list of (score, max_score, career_dict)"""
     user_inputs = {
         'math_grade':       profile_data.get('math_grade', ''),
         'english_grade':    profile_data.get('english_grade', ''),
@@ -272,19 +282,20 @@ def run_algorithm(profile_data):
 
     points = [map_grade(v) for v in user_inputs.values() if v]
     if not points:
-        return "<p style='text-align:center;'>Please select valid grades to see recommendations.</p>", "", 0, user_inputs
+        return [], 0, 'Unknown', user_inputs
 
     mean_grade = sum(points) / len(user_inputs)
 
     if mean_grade >= 7.0:
-        level_msg = "<div class='alert alert-success' style='text-align:center;background:#e8f5e9;color:#2e7d32;border-color:#c8e6c9;'><strong>Qualification: Degree Level (University)</strong><br>You qualify for Direct University placement!</div>"
+        study_level = 'University / Graduate'
     elif mean_grade >= 5.0:
-        level_msg = "<div class='alert alert-success' style='text-align:center;background:#fff3e0;color:#e65100;border-color:#ffe0b2;'><strong>Qualification: Diploma Level</strong><br>You qualify for TVET Diploma courses.</div>"
+        study_level = 'Diploma / TVET'
     elif mean_grade >= 3.0:
-        level_msg = "<div class='alert alert-success' style='text-align:center;background:#e1f5fe;color:#0277bd;border-color:#b3e5fc;'><strong>Qualification: Certificate Level</strong><br>You qualify for TVET Certificate courses.</div>"
+        study_level = 'Certificate'
     else:
-        level_msg = "<div class='alert alert-success' style='text-align:center;background:#f3e5f5;color:#4a148c;border-color:#e1bee7;'><strong>Qualification: Artisan Level</strong><br>You qualify for artisan-level practical skills programs.</div>"
+        study_level = 'Artisan'
 
+    # Compute max possible score for normalisation
     scored = []
     for c in CAREERS:
         if education_goal and c['level'] != education_goal:
@@ -294,24 +305,19 @@ def run_algorithm(profile_data):
         subject_score  = sum(map_grade(user_inputs.get(s, '')) * 2 for s in c['subjects'])
         trait_score    = sum(c['traits'].get(t, 0) for t in traits)
         industry_score = sum(8 for ind in industry_list if ind in c.get('industries', []))
-        scored.append((subject_score + trait_score + industry_score, c))
+        total = subject_score + trait_score + industry_score
+        scored.append((total, c))
 
     scored.sort(key=lambda x: x[0], reverse=True)
 
-    if not scored:
-        return "<p style='text-align:center;'>No matching clusters found. Try broadening your goal.</p>", level_msg, mean_grade, user_inputs
+    # Normalise scores to % match (max score of top result = 100%)
+    if scored:
+        max_score = max(s for s, _ in scored) or 1
+        result = [(round((s / max_score) * 100), c) for s, c in scored[:8]]
+    else:
+        result = []
 
-    recs = ""
-    for score, c in scored[:4]:
-        color = "green" if c['level'] == "Degree" else "black" if c['level'] == "Diploma" else "red"
-        badge = "<span class='badge badge-green' style='margin-top:1rem;'>98% Match</span>" if score > 40 else ""
-        recs += f"""<div class="card card-{color}">
-            <h3>{c['name']}</h3>
-            <p><strong>Level:</strong> {c['level']}<br><strong>Score:</strong> {score} pts</p>
-            {badge}
-        </div>"""
-
-    return recs, level_msg, mean_grade, user_inputs
+    return result, mean_grade, study_level, user_inputs
 
 
 class handler(http.server.BaseHTTPRequestHandler):
@@ -581,6 +587,29 @@ DB connection = {db_status}
 GMAIL_USER = {gmail}
 GMAIL_APP_PASSWORD = {gmail_pass}
 </pre>""".encode())
+
+        elif path == '/recommendations':
+            if not user:
+                return self.send_redirect('/login')
+            saved = user.get('last_results', '')
+            if saved:
+                try:
+                    results = json.loads(saved)
+                    cards = ''
+                    for i, r in enumerate(results[:4]):
+                        sel = 'rec-card-selected' if i == 0 else ''
+                        cards += f'<div class="rec-program-card {sel}" onclick="selectProgram(this,{i})"><div class="rec-card-top"><a class="rec-card-title">{r["name"]}</a><span class="rec-match-badge rec-match-high">{r["match"]}% MATCH</span></div><div class="rec-card-tags"><span class="rec-tag">{r["level"]}</span></div></div>'
+                    self.send_html(self.render_template('recommendations.html', {
+                        'title': 'Your Career Recommendations',
+                        'top_pathway': 'STEM', 'mean_grade': '-', 'comp_index': '-',
+                        'study_level': '-', 'top_match': f'{results[0]["match"]}%' if results else '-',
+                        'top_name': results[0]['name'] if results else '-',
+                        'program_cards': cards, 'detail_html': '', 'math_grade': '-', 'english_grade': '-'
+                    }))
+                except Exception:
+                    self.send_redirect('/profile')
+            else:
+                self.send_redirect('/profile')
 
         elif path == '/scholarships':
             search = query.get('q', [''])[0]
@@ -916,21 +945,108 @@ GMAIL_APP_PASSWORD = {gmail_pass}
 
         elif path == '/profile/submit':
             profile_data = parse_profile_cookie(self.headers.get('Cookie', ''))
-            recs, level_msg, mean_grade, user_inputs = run_algorithm(profile_data)
+            scored_careers, mean_grade, study_level, user_inputs = run_algorithm(profile_data)
+
+            # Save profile + results to DB if user is logged in
+            current_user = self.get_current_user()
+            if current_user and current_user.get('id'):
+                try:
+                    conn = get_db_connection()
+                    db_execute(conn, f"UPDATE users SET profile_data={ph()}, last_results={ph()} WHERE id={ph()}",
+                               (json.dumps(profile_data), json.dumps([{'match': m, 'name': c['name'], 'level': c['level'], 'industries': c.get('industries',[])} for m, c in scored_careers]),
+                                current_user['id']))
+                    conn.close()
+                except Exception:
+                    pass
+
+            # Determine top pathway
+            top_pathway = 'STEM'
+            if scored_careers:
+                top_c = scored_careers[0][1]
+                industries = top_c.get('industries', [])
+                if any(i in industries for i in ['Healthcare', 'SocialWork', 'Law', 'EdTech']):
+                    top_pathway = 'Social Sciences'
+                elif any(i in industries for i in ['Creative', 'Media', 'Tourism']):
+                    top_pathway = 'Arts & Humanities'
+                else:
+                    top_pathway = 'STEM'
+
+            # Build program cards HTML
+            program_cards = ''
+            for i, (match_pct, c) in enumerate(scored_careers[:4]):
+                level_tag = 'University' if c['level'] == 'Degree' else 'TVET'
+                demand = 'High Demand' if match_pct >= 80 else 'Medium Demand'
+                entry_grade = f"Mean Grade {c.get('min_grade_label', 'C+')} and above"
+                skills_fit = min(match_pct + 5, 99)
+                grades_fit = min(match_pct - 3, 99)
+                selected_class = 'rec-card-selected' if i == 0 else ''
+                program_cards += f"""
+                <div class="rec-program-card {selected_class}" onclick="selectProgram(this, {i})" data-index="{i}">
+                    <div class="rec-card-top">
+                        <div>
+                            <a class="rec-card-title">{c['name']}</a>
+                            <span class="rec-card-tag">{level_tag}</span>
+                            {'<span class="rec-card-tag rec-tag-scholar">Scholarship</span>' if match_pct >= 80 else ''}
+                        </div>
+                        <span class="rec-match-badge {'rec-match-high' if match_pct >= 85 else 'rec-match-med'}">{match_pct}% MATCH</span>
+                    </div>
+                    <div class="rec-card-tags">
+                        <span class="rec-tag">{c['level']}</span>
+                        <span class="rec-tag">{demand}</span>
+                    </div>
+                    <div class="rec-card-fit">
+                        <span>SKILLS FIT <strong>{skills_fit}%</strong></span>
+                        <span>GRADES FIT <strong>{grades_fit}%</strong></span>
+                    </div>
+                </div>"""
+
+            # Build selected program detail (first result)
+            detail_html = ''
+            if scored_careers:
+                _, top = scored_careers[0]
+                careers_out = ', '.join(['Fullstack Developer', 'Data Analyst', 'Engineer', 'Researcher'][:3])
+                detail_html = f"""
+                <div class="rec-detail-card" id="rec-detail">
+                    <h3>Selected: <span style="color:#3b82f6">{top['name']}</span></h3>
+                    <p style="color:#6b7280;font-size:0.88rem;margin-bottom:1.5rem;">Full-time • {top['level']} • Kenya</p>
+                    <div class="rec-detail-grid">
+                        <div>
+                            <h5>ENTRY REQUIREMENTS</h5>
+                            <ul class="rec-req-list">
+                                <li>KCSE Mean Grade: {study_level}</li>
+                                {''.join(f'<li>{s.replace("_grade","").title()}: {user_inputs.get(s,"-")}</li>' for s in top['subjects'][:3])}
+                            </ul>
+                        </div>
+                        <div>
+                            <h5>CAREER OUTCOMES</h5>
+                            <div class="rec-outcome-tags">
+                                {''.join(f'<span class="rec-tag">{o}</span>' for o in ['Developer','Analyst','Engineer','Manager'][:3])}
+                            </div>
+                        </div>
+                        <div>
+                            <h5>PROJECTED COST</h5>
+                            <p class="rec-cost">KES 180,000</p>
+                            <small style="color:#6b7280;">Estimated Annual Tuition</small>
+                        </div>
+                    </div>
+                </div>"""
+
+            # Competency index
+            ratings = [int(profile_data.get(f'rating_{k}', 0) or 0) for k in ['analytical','coding','verbal','critical','creative','leadership']]
+            comp_index = round(sum(ratings) / (len(ratings) * 5) * 10, 1) if ratings else 0
 
             ctx = {
-                'title':               'Your Recommendations',
-                'recommendations_list': recs,
-                'level_msg':           level_msg,
-                'math_grade':          user_inputs['math_grade'] or '-',
-                'english_grade':       user_inputs['english_grade'] or '-',
-                'kiswahili_grade':     user_inputs['kiswahili_grade'] or '-',
-                'biology_grade':       user_inputs['biology_grade'] or '-',
-                'chemistry_grade':     user_inputs['chemistry_grade'] or '-',
-                'physics_grade':       user_inputs['physics_grade'] or '-',
-                'humanities_grade':    user_inputs['humanities_grade'] or '-',
-                'interests':           'Dynamic Weighted Scoring',
-                'mean_grade':          f"{mean_grade:.2f}" if mean_grade else '-'
+                'title': 'Your Career Recommendations',
+                'top_pathway': top_pathway,
+                'mean_grade': f"{mean_grade:.1f}" if mean_grade else '-',
+                'comp_index': f"{comp_index}/10",
+                'study_level': study_level,
+                'top_match': str(scored_careers[0][0]) + '%' if scored_careers else '-',
+                'top_name': scored_careers[0][1]['name'] if scored_careers else '-',
+                'program_cards': program_cards,
+                'detail_html': detail_html,
+                'math_grade': user_inputs['math_grade'] or '-',
+                'english_grade': user_inputs['english_grade'] or '-',
             }
             self.send_response(200)
             self.send_header('Content-type', 'text/html')

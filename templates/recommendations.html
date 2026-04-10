@@ -1,48 +1,162 @@
-<div style="text-align: center; margin-bottom: 2rem;">
-    <h2>Your Competency-Based Career Recommendations</h2>
-    <p>Based on your Form Four KCSE grades, here are the optimized career pathways tailored to your strengths and interests.</p>
+<!-- TOP HERO CARD -->
+<div class="rec-hero">
+  <div class="rec-hero-left">
+    <div class="rec-hero-badges">
+      <span class="rec-badge-top">Top Recommendation</span>
+      <span class="rec-badge-match">↗ {{top_match}} PATHWAY MATCH</span>
+    </div>
+    <h1 class="rec-hero-title">Your Recommended Pathway: <span style="color:#3b82f6">{{top_pathway}}</span></h1>
+    <p class="rec-hero-desc">Based on your academic profile and competency ratings, your strongest pathway has been identified. Review your matched programs below.</p>
+    <div class="rec-hero-stats">
+      <div class="rec-hero-stat">
+        <span class="rec-stat-label">📊 MEAN GRADE</span>
+        <span class="rec-stat-val">{{math_grade}} ({{mean_grade}})</span>
+      </div>
+      <div class="rec-hero-stat">
+        <span class="rec-stat-label">⭐ COMPETENCY INDEX</span>
+        <span class="rec-stat-val">{{comp_index}}</span>
+      </div>
+      <div class="rec-hero-stat">
+        <span class="rec-stat-label">🎓 STUDY LEVEL</span>
+        <span class="rec-stat-val">{{study_level}}</span>
+      </div>
+    </div>
+  </div>
+  <div class="rec-hero-right">
+    <div class="rec-riasec-card">
+      <p class="rec-riasec-title">RIASEC DIMENSIONS</p>
+      <div class="rec-riasec-bars">
+        <div class="rec-riasec-row"><span>Realistic</span><div class="rec-bar"><div class="rec-bar-fill" style="width:72%"></div></div><span>72%</span></div>
+        <div class="rec-riasec-row"><span>Investigative</span><div class="rec-bar"><div class="rec-bar-fill" style="width:88%;background:#3b82f6"></div></div><span>88%</span></div>
+        <div class="rec-riasec-row"><span>Social</span><div class="rec-bar"><div class="rec-bar-fill" style="width:65%;background:#10b981"></div></div><span>65%</span></div>
+        <div class="rec-riasec-row"><span>Conventional</span><div class="rec-bar"><div class="rec-bar-fill" style="width:70%;background:#f59e0b"></div></div><span>70%</span></div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<div style="margin-bottom: 2rem;">
-    {{level_msg}}
-</div>
+<!-- MAIN CONTENT -->
+<div class="rec-main">
+  <div class="rec-left-col">
 
-<div class="grid">
-    {{recommendations_list}}
-</div>
+    <!-- FILTER TABS -->
+    <div class="rec-filter-bar">
+      <div class="rec-tabs">
+        <button class="rec-tab active" onclick="filterPrograms('all', this)">All Programs</button>
+        <button class="rec-tab" onclick="filterPrograms('Degree', this)">University Degrees</button>
+        <button class="rec-tab" onclick="filterPrograms('Diploma', this)">TVET Programs</button>
+      </div>
+      <div class="rec-sort">
+        <span style="font-size:0.82rem;color:#6b7280;">SORT BY:</span>
+        <button class="rec-sort-btn active">Match Score</button>
+        <button class="rec-sort-btn">Market Demand</button>
+      </div>
+    </div>
 
-<div style="margin-top: 3rem; background: var(--color-white); padding: 2rem; border-radius: var(--border-radius); box-shadow: var(--box-shadow); border-top: 4px solid var(--color-black);">
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 1rem; margin-bottom: 1rem;">
-        <h3 style="margin:0;">Your Academic Profile</h3>
-        <div>
-            <span class="badge badge-black" style="font-size: 1.1rem; padding: 0.5rem 1rem;">Mean Grade: {{mean_grade}} / 12.0</span>
+    <!-- ACTIVE FILTERS -->
+    <div class="rec-active-filters">
+      <span class="rec-filter-chip">Market Demand (High)</span>
+      <span class="rec-filter-chip">Scholarship Eligible</span>
+      <span class="rec-filter-chip">Entry Level (Degree)</span>
+    </div>
+
+    <!-- PROGRAM CARDS GRID -->
+    <div class="rec-programs-grid" id="rec-programs">
+      {{program_cards}}
+    </div>
+
+    <!-- SELECTED PROGRAM DETAIL -->
+    {{detail_html}}
+
+  </div>
+
+  <!-- RIGHT SIDEBAR -->
+  <div class="rec-sidebar">
+    <div class="rec-funding-card">
+      <div class="rec-funding-header">
+        <h4>Available Funding</h4>
+        <small>FINANCIAL AID FOR YOUR PROFILE</small>
+      </div>
+      <div class="rec-funding-search">
+        <input type="text" placeholder="🔍 Filter local bursaries...">
+      </div>
+      <div class="rec-funding-list">
+        <div class="rec-funding-item">
+          <div class="rec-funding-info">
+            <strong>Equity Wings to Fly</strong>
+            <span class="rec-funding-type">Full Tuition + Stipend</span>
+            <small>🌍 National Coverage</small>
+          </div>
+          <span class="rec-funding-eligible yes">Yes</span>
+          <a href="https://equitygroupfoundation.com/wings-to-fly/" target="_blank" class="rec-apply-btn">Apply Now</a>
         </div>
+        <div class="rec-funding-item">
+          <div class="rec-funding-info">
+            <strong>County Ward Bursary</strong>
+            <span class="rec-funding-type" style="color:#f59e0b;">KES 15,000 – 50,000</span>
+            <small>📍 County Level</small>
+          </div>
+          <span class="rec-funding-eligible maybe">Maybe</span>
+          <a href="https://www.ngcdf.go.ke/" target="_blank" class="rec-apply-btn">Apply Now</a>
+        </div>
+        <div class="rec-funding-item">
+          <div class="rec-funding-info">
+            <strong>HEF / HELB Loan &amp; Grant</strong>
+            <span class="rec-funding-type">Govt Subsidized</span>
+            <small>🏛️ Accredited Institutions</small>
+          </div>
+          <span class="rec-funding-eligible yes">Yes</span>
+          <a href="https://www.helb.co.ke/" target="_blank" class="rec-apply-btn">Apply Now</a>
+        </div>
+        <div class="rec-funding-item">
+          <div class="rec-funding-info">
+            <strong>NG-CDF Scholarship</strong>
+            <span class="rec-funding-type">Partial Tuition</span>
+            <small>📍 Constituency Level</small>
+          </div>
+          <span class="rec-funding-eligible yes">Yes</span>
+          <a href="https://www.ngcdf.go.ke/" target="_blank" class="rec-apply-btn">Apply Now</a>
+        </div>
+      </div>
+      <a href="/scholarships" class="rec-view-all">View all opportunities →</a>
     </div>
-    <p><strong>Primary Area of Interest:</strong> <span style="color: var(--color-red); font-weight: bold;">{{interests}}</span></p>
-    
-    <div class="table-responsive">
-        <table style="width: 100%; text-align: left; border: 1px solid #eee; font-size: 0.9rem;">
-            <tr style="background-color: #f7f9fc;">
-                <th>Math</th>
-                <th>Eng</th>
-                <th>Swa</th>
-                <th>Bio</th>
-                <th>Chem</th>
-                <th>Phy</th>
-                <th>Hum</th>
-            </tr>
-            <tr>
-                <td style="font-weight: bold; color: var(--color-green);">{{math_grade}}</td>
-                <td style="font-weight: bold; color: var(--color-green);">{{english_grade}}</td>
-                <td style="font-weight: bold; color: var(--color-green);">{{kiswahili_grade}}</td>
-                <td style="font-weight: bold; color: var(--color-green);">{{biology_grade}}</td>
-                <td style="font-weight: bold; color: var(--color-green);">{{chemistry_grade}}</td>
-                <td style="font-weight: bold; color: var(--color-green);">{{physics_grade}}</td>
-                <td style="font-weight: bold; color: var(--color-green);">{{humanities_grade}}</td>
-            </tr>
-        </table>
+
+    <div class="rec-counselor-card">
+      <h4>Need Help Choosing?</h4>
+      <p>Talk to an accredited career counselor today to finalize your roadmap.</p>
+      <a href="#" class="rec-schedule-btn">Schedule Free Intro Call</a>
     </div>
-    <div style="margin-top: 1.5rem; text-align: center;">
-        <a href="/profile" class="btn-secondary" style="border-color: var(--color-black); color: var(--color-black); background: #eee;">Update Grades / Interest</a>
-    </div>
+  </div>
 </div>
+
+<!-- STICKY BOTTOM BAR -->
+<div class="rec-sticky-bar">
+  <div class="rec-sticky-info">
+    <div><small>SELECTED PATHWAY</small><strong>{{top_pathway}} ({{top_match}})</strong></div>
+    <div><small>MATCHED COURSE</small><strong>{{top_name}}</strong></div>
+    <div><small>FUNDING SELECTED</small><strong>Equity Wings to Fly</strong></div>
+  </div>
+  <div class="rec-sticky-actions">
+    <button class="rec-sticky-btn-outline" onclick="window.print()">📥 Download Roadmap PDF</button>
+    <a href="/profile/step1" class="rec-sticky-btn-primary">Retake Profile</a>
+  </div>
+</div>
+
+<script>
+function filterPrograms(level, btn) {
+  document.querySelectorAll('.rec-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.rec-program-card').forEach(card => {
+    const tag = card.querySelector('.rec-tag');
+    if (level === 'all' || (tag && tag.textContent.includes(level === 'Degree' ? 'Degree' : 'Diploma'))) {
+      card.style.display = '';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+function selectProgram(card, idx) {
+  document.querySelectorAll('.rec-program-card').forEach(c => c.classList.remove('rec-card-selected'));
+  card.classList.add('rec-card-selected');
+}
+</script>
