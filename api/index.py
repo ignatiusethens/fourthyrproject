@@ -52,7 +52,7 @@ def get_db_connection():
     return conn
 
 def init_db():
-    """Ensure all required tables exist."""
+    """Ensure all required tables exist with the correct schema."""
     try:
         conn = get_db_connection()
         if is_postgres():
@@ -87,6 +87,14 @@ def init_db():
             conn.commit()
             cur.close()
         else:
+            # SQLite: drop and recreate users table if it's missing new columns
+            existing = conn.execute("PRAGMA table_info(users)").fetchall()
+            col_names = [row[1] for row in existing]
+            if existing and 'full_name' not in col_names:
+                conn.execute("DROP TABLE IF EXISTS users")
+                conn.execute("DROP TABLE IF EXISTS sessions")
+                conn.execute("DROP TABLE IF EXISTS verification_tokens")
+                conn.commit()
             conn.execute("""CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 full_name TEXT, email TEXT UNIQUE NOT NULL,
