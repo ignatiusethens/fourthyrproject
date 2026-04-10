@@ -121,11 +121,10 @@ def send_verification_email(to_email, token):
     gmail_user = os.getenv("GMAIL_USER", "")
     gmail_pass = os.getenv("GMAIL_APP_PASSWORD", "")
     if not gmail_user or not gmail_pass:
-        return  # Email not configured, skip silently
+        return False  # Not configured
     base_url = os.getenv("BASE_URL", "https://fourthyrproject.vercel.app")
     link = f"{base_url}/verify?token={token}"
-    msg = MIMEText(f"""
-Hi,
+    body = f"""Hi,
 
 Thanks for registering on the Career & Scholarship Portal.
 
@@ -134,19 +133,23 @@ Click the link below to verify your email address:
 
 This link expires in 24 hours.
 
-If you did not create an account, ignore this email.
+If you did not create an account, please ignore this email.
 
 — Career & Scholarship Portal Team
-    """)
-    msg['Subject'] = 'Verify your Career Portal account'
-    msg['From'] = gmail_user
+support@careerportal.ke"""
+    msg = MIMEText(body)
+    msg['Subject'] = 'Verify your Career & Scholarship Portal account'
+    msg['From'] = f"Career Portal <{gmail_user}>"
     msg['To'] = to_email
     try:
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
             smtp.login(gmail_user, gmail_pass)
             smtp.send_message(msg)
+        return True
+    except smtplib.SMTPAuthenticationError:
+        return False  # Wrong credentials
     except Exception:
-        pass  # Fail silently — user can still use the portal
+        return False
 
 def map_grade(g):
     return GRADE_MAP.get(g, 0)
@@ -675,8 +678,11 @@ class handler(http.server.BaseHTTPRequestHandler):
                 db_execute(conn, f"INSERT INTO verification_tokens (token, user_id, expires_at) VALUES ({ph()},{ph()},{ph()})",
                              (token, user_id, int(time.time()) + 86400))
                 conn.close()
-                send_verification_email(email, token)
-                self.send_html(self.render_template('verify_email.html', {'title': 'Check Your Email', 'email': email}))
+                email_sent = send_verification_email(email, token)
+                alert = ''
+                if not email_sent:
+                    alert = '<div class="alert alert-success" style="background:#fff3e0;color:#e65100;border-color:#ffe0b2;">Account created! Email sending is not configured yet — ask the admin to verify your account manually.</div>'
+                self.send_html(self.render_template('verify_email.html', {'title': 'Check Your Email', 'email': email, 'alert': alert}))
             except sqlite3.IntegrityError:
                 self.send_html(self.render_template('register.html', {
                     'title': 'Create Account',
