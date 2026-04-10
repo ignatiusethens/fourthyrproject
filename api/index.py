@@ -474,6 +474,9 @@ class handler(http.server.BaseHTTPRequestHandler):
         elif path == '/dashboard':
             if not user:
                 return self.send_redirect('/login')
+            # If user has saved results, redirect straight to recommendations
+            if user.get('last_results'):
+                return self.send_redirect('/recommendations')
             self.send_html(self.render_template('dashboard.html', {
                 'title': 'Dashboard',
                 'user_name': user.get('full_name', 'Student')
@@ -591,22 +594,87 @@ GMAIL_APP_PASSWORD = {gmail_pass}
         elif path == '/recommendations':
             if not user:
                 return self.send_redirect('/login')
-            saved = user.get('last_results', '')
-            if saved:
+            saved_profile = user.get('profile_data', '')
+            saved_results = user.get('last_results', '')
+            if saved_profile or saved_results:
                 try:
-                    results = json.loads(saved)
-                    cards = ''
-                    for i, r in enumerate(results[:4]):
+                    # Re-run algorithm from saved profile data for full page
+                    if saved_profile:
+                        profile_data = json.loads(saved_profile)
+                        scored_careers, mean_grade, study_level, user_inputs = run_algorithm(profile_data)
+                    else:
+                        # Fallback: use saved results only
+                        results = json.loads(saved_results)
+                        cards = ''
+                        for i, r in enumerate(results[:4]):
+                            sel = 'rec-card-selected' if i == 0 else ''
+                            cards += f'<div class="rec-program-card {sel}" onclick="selectProgram(this,{i})"><div class="rec-card-top"><a class="rec-card-title">{r["name"]}</a><span class="rec-match-badge rec-match-high">{r["match"]}% MATCH</span></div><div class="rec-card-tags"><span class="rec-tag">{r["level"]}</span></div></div>'
+                        self.send_html(self.render_template('recommendations.html', {
+                            'title': 'Your Career Recommendations',
+                            'top_pathway': 'STEM', 'mean_grade': '-', 'comp_index': '-',
+                            'study_level': '-', 'top_match': f'{results[0]["match"]}%' if results else '-',
+                            'top_name': results[0]['name'] if results else '-',
+                            'program_cards': cards, 'detail_html': '', 'math_grade': '-', 'english_grade': '-'
+                        }))
+                        return
+
+                    # Build full page same as submit handler
+                    top_pathway = 'STEM'
+                    if scored_careers:
+                        industries = scored_careers[0][1].get('industries', [])
+                        if any(i in industries for i in ['Healthcare','SocialWork','Law','EdTech']):
+                            top_pathway = 'Social Sciences'
+                        elif any(i in industries for i in ['Creative','Media','Tourism']):
+                            top_pathway = 'Arts & Humanities'
+
+                    program_cards = ''
+                    for i, (match_pct, c) in enumerate(scored_careers[:4]):
+                        level_tag = 'University' if c['level'] == 'Degree' else 'TVET'
+                        demand = 'High Demand' if match_pct >= 80 else 'Medium Demand'
                         sel = 'rec-card-selected' if i == 0 else ''
-                        cards += f'<div class="rec-program-card {sel}" onclick="selectProgram(this,{i})"><div class="rec-card-top"><a class="rec-card-title">{r["name"]}</a><span class="rec-match-badge rec-match-high">{r["match"]}% MATCH</span></div><div class="rec-card-tags"><span class="rec-tag">{r["level"]}</span></div></div>'
+                        skills_fit = min(match_pct + 5, 99)
+                        grades_fit = min(match_pct - 3, 99)
+                        program_cards += f"""<div class="rec-program-card {sel}" onclick="selectProgram(this,{i})" data-index="{i}">
+                            <div class="rec-card-top"><div><a class="rec-card-title">{c['name']}</a><span class="rec-card-tag">{level_tag}</span>{'<span class="rec-card-tag rec-tag-scholar">Scholarship</span>' if match_pct >= 80 else ''}</div>
+                            <span class="rec-match-badge {'rec-match-high' if match_pct >= 85 else 'rec-match-med'}">{match_pct}% MATCH</span></div>
+                            <div class="rec-card-tags"><span class="rec-tag">{c['level']}</span><span class="rec-tag">{demand}</span></div>
+                            <div class="rec-card-fit"><span>SKILLS FIT <strong>{skills_fit}%</strong></span><span>GRADES FIT <strong>{grades_fit}%</strong></span></div>
+                        </div>"""
+
+                    detail_html = ''
+                    if scored_careers:
+                        _, top = scored_careers[0]
+                        detail_html = f"""<div class="rec-detail-card" id="rec-detail">
+                            <h3>Selected: <span style="color:#3b82f6">{top['name']}</span></h3>
+                            <p style="color:#6b7280;font-size:0.88rem;margin-bottom:1.5rem;">Full-time • {top['level']} • Kenya</p>
+                            <div class="rec-detail-grid">
+                                <div><h5>ENTRY REQUIREMENTS</h5><ul class="rec-req-list">
+                                    <li>KCSE Mean Grade: {study_level}</li>
+                                    {''.join(f'<li>{s.replace("_grade","").title()}: {user_inputs.get(s,"-")}</li>' for s in top['subjects'][:3])}
+                                </ul></div>
+                                <div><h5>CAREER OUTCOMES</h5><div class="rec-outcome-tags">
+                                    {''.join(f'<span class="rec-tag">{o}</span>' for o in ["Developer","Analyst","Engineer","Manager"][:3])}
+                                </div></div>
+                                <div><h5>PROJECTED COST</h5><p class="rec-cost">KES 180,000</p><small style="color:#6b7280;">Estimated Annual Tuition</small></div>
+                            </div></div>"""
+
+                    ratings = [int(profile_data.get(f'rating_{k}', 0) or 0) for k in ['analytical','coding','verbal','critical','creative','leadership']]
+                    comp_index = round(sum(ratings) / (len(ratings) * 5) * 10, 1) if any(ratings) else 0
+
                     self.send_html(self.render_template('recommendations.html', {
                         'title': 'Your Career Recommendations',
-                        'top_pathway': 'STEM', 'mean_grade': '-', 'comp_index': '-',
-                        'study_level': '-', 'top_match': f'{results[0]["match"]}%' if results else '-',
-                        'top_name': results[0]['name'] if results else '-',
-                        'program_cards': cards, 'detail_html': '', 'math_grade': '-', 'english_grade': '-'
+                        'top_pathway': top_pathway,
+                        'mean_grade': f"{mean_grade:.1f}" if mean_grade else '-',
+                        'comp_index': f"{comp_index}/10",
+                        'study_level': study_level,
+                        'top_match': str(scored_careers[0][0]) + '%' if scored_careers else '-',
+                        'top_name': scored_careers[0][1]['name'] if scored_careers else '-',
+                        'program_cards': program_cards,
+                        'detail_html': detail_html,
+                        'math_grade': user_inputs.get('math_grade', '-') or '-',
+                        'english_grade': user_inputs.get('english_grade', '-') or '-',
                     }))
-                except Exception:
+                except Exception as e:
                     self.send_redirect('/profile')
             else:
                 self.send_redirect('/profile')
