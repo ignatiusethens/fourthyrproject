@@ -687,6 +687,15 @@ GMAIL_APP_PASSWORD = {gmail_pass}
 
     # ------------------------------------------------------------------ POST
     def do_POST(self):
+        try:
+            self._handle_post()
+        except Exception as e:
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            self.wfile.write(f'<pre style="color:red;padding:2rem;">POST Error: {str(e)}\n\nPath: {self.path}</pre>'.encode())
+
+    def _handle_post(self):
         parsed = urllib.parse.urlparse(self.path)
         path   = parsed.path
 
@@ -748,7 +757,10 @@ GMAIL_APP_PASSWORD = {gmail_pass}
                 db_execute(conn, f"INSERT INTO verification_tokens (token, user_id, expires_at) VALUES ({ph()},{ph()},{ph()})",
                              (otp, user_id, int(time.time()) + 600))
                 conn.close()
-                email_sent = send_otp_email(email, otp)
+                try:
+                    email_sent = send_otp_email(email, otp)
+                except Exception:
+                    email_sent = False
                 alert = ''
                 if not email_sent:
                     alert = f'<div class="alert alert-success" style="background:#fff3e0;color:#e65100;border-color:#ffe0b2;">Account created! Email could not be sent. Your code is: <strong>{otp}</strong></div>'
