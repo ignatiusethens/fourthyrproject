@@ -35,7 +35,7 @@ TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 GRADE_MAP = {'A':12,'A-':11,'B+':10,'B':9,'B-':8,'C+':7,'C':6,'C-':5,'D+':4,'D':3,'D-':2,'E':1,'':0}
 
 def is_postgres():
-    return bool(os.getenv("Carrerdatabase_url") and PSYCOPG2_AVAILABLE)
+    return bool(os.getenv("Careerdatabase_URL") and PSYCOPG2_AVAILABLE)
 
 def ph():
     """SQL placeholder: %s for Postgres, ? for SQLite."""
@@ -43,7 +43,7 @@ def ph():
 
 def get_db_connection():
     """Return a Neon PostgreSQL connection if configured, else local SQLite."""
-    db_url = os.getenv("Carrerdatabase_url")
+    db_url = os.getenv("Careerdatabase_URL")
     if db_url and PSYCOPG2_AVAILABLE:
         conn = psycopg2.connect(db_url, cursor_factory=psycopg2.extras.RealDictCursor)
         return conn
