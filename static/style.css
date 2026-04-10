@@ -1352,3 +1352,25 @@ main { width: 100%; }
   .rec-sticky-info { gap:1rem; }
   .rec-sticky-bar { flex-direction:column; gap:0.75rem; padding:0.75rem 1rem; }
 }
+
+/* ===================== PRINT / PDF STYLES ===================== */
+@media print {
+  .navbar, .rec-sticky-bar, .rec-counselor-card,
+  .rec-filter-bar, .rec-active-filters, .rec-funding-search,
+  .rec-apply-btn, .rec-view-all, .ps-footer, footer { display: none !important; }
+  .rec-main { padding: 0 !important; }
+  .rec-hero { margin: 0 0 1rem !important; border: 1px solid #ccc; }
+  .rec-sidebar { display: none !important; }
+  .rec-left-col { width: 100% !important; }
+  .rec-programs-grid { grid-template-columns: 1fr 1fr !important; }
+  body { background: #fff !important; }
+  .rec-sticky-bar { display: none !important; }
+}
+
+/* Recommendations top bar */
+.rec-top-bar { display:flex; justify-content:space-between; align-items:center; padding:1rem 2rem; background:#fff; border-bottom:1px solid #e5e7eb; }
+.rec-top-btn-outline { background:#fff; border:1.5px solid #e5e7eb; color:var(--text-main); padding:0.5rem 1rem; border-radius:8px; font-size:0.85rem; font-weight:600; text-decoration:none; transition:var(--transition); }
+.rec-top-btn-outline:hover { border-color:#3b82f6; color:#3b82f6; }
+.rec-top-btn-primary { background:#3b82f6; color:#fff; border:none; padding:0.5rem 1rem; border-radius:8px; font-size:0.85rem; font-weight:600; cursor:pointer; font-family:var(--font-family); transition:var(--transition); }
+.rec-top-btn-primary:hover { background:#2563eb; }
+@media print { .rec-top-bar { display:none !important; } }
