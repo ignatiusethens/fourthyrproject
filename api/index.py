@@ -22,10 +22,11 @@ except ImportError:
     CAREERS = []
 
 try:
-    import libsql_experimental
-    LIBSQL_AVAILABLE = True
-except Exception:
-    LIBSQL_AVAILABLE = False
+    import psycopg2
+    import psycopg2.extras
+    PSYCOPG2_AVAILABLE = True
+except ImportError:
+    PSYCOPG2_AVAILABLE = False
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 DATABASE = os.path.join(BASE_DIR, "database.db")
@@ -33,13 +34,20 @@ TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 
 GRADE_MAP = {'A':12,'A-':11,'B+':10,'B':9,'B-':8,'C+':7,'C':6,'C-':5,'D+':4,'D':3,'D-':2,'E':1,'':0}
 
+def is_postgres():
+    return bool(os.getenv("Carrerdatabase_url") and PSYCOPG2_AVAILABLE)
+
+def ph():
+    """SQL placeholder: %s for Postgres, ? for SQLite."""
+    return "%s" if is_postgres() else "?"
+
 def get_db_connection():
-    turso_url = os.getenv("TURSO_DATABASE_URL")
-    turso_token = os.getenv("TURSO_AUTH_TOKEN")
-    if turso_url and turso_token and LIBSQL_AVAILABLE:
-        conn = libsql_experimental.connect(turso_url, auth_token=turso_token)
-    else:
-        conn = sqlite3.connect(DATABASE)
+    """Return a Neon PostgreSQL connection if configured, else local SQLite."""
+    db_url = os.getenv("Carrerdatabase_url")
+    if db_url and PSYCOPG2_AVAILABLE:
+        conn = psycopg2.connect(db_url, cursor_factory=psycopg2.extras.RealDictCursor)
+        return conn
+    conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -47,34 +55,57 @@ def init_db():
     """Ensure all required tables exist."""
     try:
         conn = get_db_connection()
-        conn.execute("""CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            full_name TEXT,
-            email TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            role TEXT DEFAULT 'student',
-            school TEXT,
-            phone TEXT,
-            study_areas TEXT,
-            is_verified INTEGER DEFAULT 0,
-            created_at INTEGER DEFAULT 0
-        )""")
-        conn.execute("""CREATE TABLE IF NOT EXISTS sessions (
-            session_id TEXT PRIMARY KEY,
-            user_id INTEGER,
-            created_at INTEGER
-        )""")
-        conn.execute("""CREATE TABLE IF NOT EXISTS verification_tokens (
-            token TEXT PRIMARY KEY,
-            user_id INTEGER,
-            expires_at INTEGER
-        )""")
-        conn.execute("""CREATE TABLE IF NOT EXISTS scholarships (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT, provider TEXT, description TEXT,
-            eligibility_criteria TEXT, deadline TEXT, link TEXT
-        )""")
-        conn.commit()
+        if is_postgres():
+            cur = conn.cursor()
+            cur.execute("""CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                full_name TEXT,
+                email TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                role TEXT DEFAULT 'student',
+                school TEXT,
+                phone TEXT,
+                study_areas TEXT,
+                is_verified INTEGER DEFAULT 0,
+                created_at BIGINT DEFAULT 0
+            )""")
+            cur.execute("""CREATE TABLE IF NOT EXISTS sessions (
+                session_id TEXT PRIMARY KEY,
+                user_id INTEGER,
+                created_at BIGINT
+            )""")
+            cur.execute("""CREATE TABLE IF NOT EXISTS verification_tokens (
+                token TEXT PRIMARY KEY,
+                user_id INTEGER,
+                expires_at BIGINT
+            )""")
+            cur.execute("""CREATE TABLE IF NOT EXISTS scholarships (
+                id SERIAL PRIMARY KEY,
+                name TEXT, provider TEXT, description TEXT,
+                eligibility_criteria TEXT, deadline TEXT, link TEXT
+            )""")
+            conn.commit()
+            cur.close()
+        else:
+            conn.execute("""CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                full_name TEXT, email TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL, role TEXT DEFAULT 'student',
+                school TEXT, phone TEXT, study_areas TEXT,
+                is_verified INTEGER DEFAULT 0, created_at INTEGER DEFAULT 0
+            )""")
+            conn.execute("""CREATE TABLE IF NOT EXISTS sessions (
+                session_id TEXT PRIMARY KEY, user_id INTEGER, created_at INTEGER
+            )""")
+            conn.execute("""CREATE TABLE IF NOT EXISTS verification_tokens (
+                token TEXT PRIMARY KEY, user_id INTEGER, expires_at INTEGER
+            )""")
+            conn.execute("""CREATE TABLE IF NOT EXISTS scholarships (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT, provider TEXT, description TEXT,
+                eligibility_criteria TEXT, deadline TEXT, link TEXT
+            )""")
+            conn.commit()
         conn.close()
     except Exception:
         pass
@@ -120,7 +151,55 @@ If you did not create an account, ignore this email.
 def map_grade(g):
     return GRADE_MAP.get(g, 0)
 
-def parse_profile_cookie(cookie_header):
+def db_query(conn, sql, params=()):
+    """Execute a query and return all rows as list of dicts."""
+    if is_postgres():
+        cur = conn.cursor()
+        cur.execute(sql, params)
+        try:
+            rows = cur.fetchall()
+        except Exception:
+            rows = []
+        cur.close()
+        return rows
+    else:
+        return conn.execute(sql, params).fetchall()
+
+def db_execute(conn, sql, params=()):
+    """Execute a write query (INSERT/UPDATE/DELETE)."""
+    if is_postgres():
+        cur = conn.cursor()
+        cur.execute(sql, params)
+        conn.commit()
+        cur.close()
+    else:
+        conn.execute(sql, params)
+        conn.commit()
+
+def db_fetchone(conn, sql, params=()):
+    """Execute a query and return one row as dict."""
+    if is_postgres():
+        cur = conn.cursor()
+        cur.execute(sql, params)
+        row = cur.fetchone()
+        cur.close()
+        return dict(row) if row else None
+    else:
+        row = conn.execute(sql, params).fetchone()
+        return dict(row) if row else None
+
+def db_lastid(conn, table='users'):
+    """Get last inserted ID."""
+    if is_postgres():
+        cur = conn.cursor()
+        cur.execute(f"SELECT lastval()")
+        row = cur.fetchone()
+        cur.close()
+        return row[0] if row else None
+    else:
+        return conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+
+
     """Extract profile_data dict from cookie header string."""
     for part in cookie_header.split(';'):
         part = part.strip()
@@ -213,12 +292,12 @@ class handler(http.server.BaseHTTPRequestHandler):
                 session_id = part[len('session_id='):]
                 try:
                     conn = get_db_connection()
-                    row = conn.execute(
-                        "SELECT u.* FROM users u JOIN sessions s ON u.id=s.user_id WHERE s.session_id=?",
-                        (session_id,)).fetchone()
+                    row = db_fetchone(conn,
+                        f"SELECT u.* FROM users u JOIN sessions s ON u.id=s.user_id WHERE s.session_id={ph()}",
+                        (session_id,))
                     conn.close()
                     if row:
-                        return dict(row)
+                        return row
                 except Exception:
                     pass
             if part.startswith('admin_token=') and part[len('admin_token='):] == 'authenticated':
@@ -370,8 +449,7 @@ class handler(http.server.BaseHTTPRequestHandler):
                     sid = part[len('session_id='):]
                     try:
                         conn = get_db_connection()
-                        conn.execute("DELETE FROM sessions WHERE session_id=?", (sid,))
-                        conn.commit()
+                        db_execute(conn, f"DELETE FROM sessions WHERE session_id={ph()}", (sid,))
                         conn.close()
                     except Exception:
                         pass
@@ -387,11 +465,10 @@ class handler(http.server.BaseHTTPRequestHandler):
             token = query.get('token', [''])[0]
             try:
                 conn = get_db_connection()
-                row = conn.execute("SELECT * FROM verification_tokens WHERE token=?", (token,)).fetchone()
+                row = db_fetchone(conn, f"SELECT * FROM verification_tokens WHERE token={ph()}", (token,))
                 if row and int(time.time()) < row['expires_at']:
-                    conn.execute("UPDATE users SET is_verified=1 WHERE id=?", (row['user_id'],))
-                    conn.execute("DELETE FROM verification_tokens WHERE token=?", (token,))
-                    conn.commit()
+                    db_execute(conn, f"UPDATE users SET is_verified=1 WHERE id={ph()}", (row['user_id'],))
+                    db_execute(conn, f"DELETE FROM verification_tokens WHERE token={ph()}", (token,))
                     conn.close()
                     self.send_html(self.render_template('login.html', {
                         'title': 'Log In',
@@ -410,12 +487,11 @@ class handler(http.server.BaseHTTPRequestHandler):
             email = query.get('email', [''])[0]
             try:
                 conn = get_db_connection()
-                u = conn.execute("SELECT * FROM users WHERE email=?", (email,)).fetchone()
+                u = db_fetchone(conn, f"SELECT * FROM users WHERE email={ph()}", (email,))
                 if u and not u['is_verified']:
                     token = str(uuid.uuid4())
-                    conn.execute("INSERT OR REPLACE INTO verification_tokens (token, user_id, expires_at) VALUES (?,?,?)",
-                                 (token, u['id'], int(time.time()) + 86400))
-                    conn.commit()
+                    db_execute(conn, f"INSERT INTO verification_tokens (token, user_id, expires_at) VALUES ({ph()},{ph()},{ph()})",
+                               (token, u['id'], int(time.time()) + 86400))
                     send_verification_email(email, token)
                 conn.close()
             except Exception:
@@ -427,12 +503,12 @@ class handler(http.server.BaseHTTPRequestHandler):
             try:
                 conn = get_db_connection()
                 if search:
-                    rows = conn.execute("SELECT * FROM scholarships WHERE name LIKE ? OR description LIKE ?",
-                                        (f'%{search}%', f'%{search}%')).fetchall()
+                    rows = db_query(conn, f"SELECT * FROM scholarships WHERE name LIKE {ph()} OR description LIKE {ph()}",
+                                    (f'%{search}%', f'%{search}%'))
                 else:
-                    rows = conn.execute("SELECT * FROM scholarships").fetchall()
+                    rows = db_query(conn, "SELECT * FROM scholarships")
                 conn.close()
-            except sqlite3.OperationalError:
+            except Exception:
                 rows = []
 
             s_html = "".join(f"""
@@ -458,13 +534,13 @@ class handler(http.server.BaseHTTPRequestHandler):
                 return self.send_error(403, "Forbidden")
             try:
                 conn = get_db_connection()
-                scholarships  = conn.execute("SELECT * FROM scholarships").fetchall()
-                total_users   = conn.execute("SELECT COUNT(id) FROM users").fetchone()[0]
-                stem_users    = conn.execute("SELECT COUNT(id) FROM users WHERE interests='STEM'").fetchone()[0]
-                arts_users    = conn.execute("SELECT COUNT(id) FROM users WHERE interests='Arts_Sports'").fetchone()[0]
-                social_users  = conn.execute("SELECT COUNT(id) FROM users WHERE interests='Social_Sciences'").fetchone()[0]
+                scholarships  = db_query(conn, "SELECT * FROM scholarships")
+                total_users   = db_fetchone(conn, "SELECT COUNT(id) as c FROM users")['c']
+                stem_users    = db_fetchone(conn, "SELECT COUNT(id) as c FROM users WHERE interests='STEM'")['c']
+                arts_users    = db_fetchone(conn, "SELECT COUNT(id) as c FROM users WHERE interests='Arts_Sports'")['c']
+                social_users  = db_fetchone(conn, "SELECT COUNT(id) as c FROM users WHERE interests='Social_Sciences'")['c']
                 conn.close()
-            except sqlite3.OperationalError:
+            except Exception:
                 scholarships = []
                 total_users = stem_users = arts_users = social_users = 0
 
@@ -504,11 +580,10 @@ class handler(http.server.BaseHTTPRequestHandler):
             if s_id:
                 try:
                     conn = get_db_connection()
-                    conn.execute("DELETE FROM scholarships WHERE id = ?", (s_id,))
-                    conn.commit()
+                    db_execute(conn, f"DELETE FROM scholarships WHERE id={ph()}", (s_id,))
                     conn.close()
                     self.send_redirect('/admin?msg=deleted')
-                except sqlite3.OperationalError:
+                except Exception:
                     self.send_redirect('/admin')
             else:
                 self.send_redirect('/admin')
@@ -521,7 +596,7 @@ class handler(http.server.BaseHTTPRequestHandler):
                 return self.send_redirect('/admin')
             try:
                 conn = get_db_connection()
-                s = conn.execute("SELECT * FROM scholarships WHERE id = ?", (s_id,)).fetchone()
+                s = db_fetchone(conn, f"SELECT * FROM scholarships WHERE id={ph()}", (s_id,))
                 conn.close()
                 if not s:
                     return self.send_redirect('/admin')
@@ -591,15 +666,14 @@ class handler(http.server.BaseHTTPRequestHandler):
                 return
             try:
                 conn = get_db_connection()
-                conn.execute("""INSERT INTO users (full_name, email, password, role, school, phone, study_areas, created_at)
-                                VALUES (?,?,?,?,?,?,?,?)""",
+                db_execute(conn, f"""INSERT INTO users (full_name, email, password, role, school, phone, study_areas, created_at)
+                                VALUES ({ph()},{ph()},{ph()},{ph()},{ph()},{ph()},{ph()},{ph()})""",
                              (full_name, email, hash_password(password), role, school, phone, study_areas, int(time.time())))
-                conn.commit()
-                user_id = conn.execute("SELECT id FROM users WHERE email=?", (email,)).fetchone()['id']
+                user_row = db_fetchone(conn, f"SELECT id FROM users WHERE email={ph()}", (email,))
+                user_id = user_row['id']
                 token = str(uuid.uuid4())
-                conn.execute("INSERT INTO verification_tokens (token, user_id, expires_at) VALUES (?,?,?)",
+                db_execute(conn, f"INSERT INTO verification_tokens (token, user_id, expires_at) VALUES ({ph()},{ph()},{ph()})",
                              (token, user_id, int(time.time()) + 86400))
-                conn.commit()
                 conn.close()
                 send_verification_email(email, token)
                 self.send_html(self.render_template('verify_email.html', {'title': 'Check Your Email', 'email': email}))
@@ -619,12 +693,11 @@ class handler(http.server.BaseHTTPRequestHandler):
             password = get_val('password')
             try:
                 conn = get_db_connection()
-                u = conn.execute("SELECT * FROM users WHERE email=?", (email,)).fetchone()
+                u = db_fetchone(conn, f"SELECT * FROM users WHERE email={ph()}", (email,))
                 if u and u['password'] == hash_password(password):
                     sid = str(uuid.uuid4())
-                    conn.execute("INSERT INTO sessions (session_id, user_id, created_at) VALUES (?,?,?)",
+                    db_execute(conn, f"INSERT INTO sessions (session_id, user_id, created_at) VALUES ({ph()},{ph()},{ph()})",
                                  (sid, u['id'], int(time.time())))
-                    conn.commit()
                     conn.close()
                     self.send_response(302)
                     self.send_header('Location', '/dashboard')
@@ -646,12 +719,12 @@ class handler(http.server.BaseHTTPRequestHandler):
             email = get_val('email')
             try:
                 conn = get_db_connection()
-                u = conn.execute("SELECT * FROM users WHERE email=?", (email,)).fetchone()
+                u = db_fetchone(conn, f"SELECT * FROM users WHERE email={ph()}", (email,))
                 if u:
                     token = str(uuid.uuid4())
-                    conn.execute("INSERT OR REPLACE INTO verification_tokens (token, user_id, expires_at) VALUES (?,?,?)",
-                                 (token, u['id'], int(time.time()) + 3600))
-                    conn.commit()
+                    db_execute(conn, f"INSERT INTO verification_tokens (token, user_id, expires_at) VALUES ({ph()},{ph()},{ph()}) ON CONFLICT(token) DO UPDATE SET expires_at=EXCLUDED.expires_at" if is_postgres() else
+                               f"INSERT OR REPLACE INTO verification_tokens (token, user_id, expires_at) VALUES ({ph()},{ph()},{ph()})",
+                               (token, u['id'], int(time.time()) + 3600))
                     send_verification_email(email, token)
                 conn.close()
             except Exception:
@@ -727,14 +800,13 @@ class handler(http.server.BaseHTTPRequestHandler):
                 return self.send_error(403, "Forbidden")
             try:
                 conn = get_db_connection()
-                conn.execute("""INSERT INTO scholarships (name, provider, description, eligibility_criteria, deadline, link)
-                                VALUES (?, ?, ?, ?, ?, ?)""",
+                db_execute(conn, f"""INSERT INTO scholarships (name, provider, description, eligibility_criteria, deadline, link)
+                                VALUES ({ph()},{ph()},{ph()},{ph()},{ph()},{ph()})""",
                              (get_val('name'), get_val('provider'), get_val('description'),
                               get_val('eligibility_criteria'), get_val('deadline'), get_val('link')))
-                conn.commit()
                 conn.close()
                 self.send_redirect('/admin?msg=added')
-            except sqlite3.OperationalError:
+            except Exception:
                 self.send_redirect('/admin')
 
         elif path == '/admin/edit_scholarship':
@@ -746,15 +818,14 @@ class handler(http.server.BaseHTTPRequestHandler):
                 return self.send_redirect('/admin')
             try:
                 conn = get_db_connection()
-                conn.execute("""UPDATE scholarships
-                                SET name=?, provider=?, description=?, eligibility_criteria=?, deadline=?, link=?
-                                WHERE id=?""",
+                db_execute(conn, f"""UPDATE scholarships
+                                SET name={ph()}, provider={ph()}, description={ph()}, eligibility_criteria={ph()}, deadline={ph()}, link={ph()}
+                                WHERE id={ph()}""",
                              (get_val('name'), get_val('provider'), get_val('description'),
                               get_val('eligibility_criteria'), get_val('deadline'), get_val('link'), s_id))
-                conn.commit()
                 conn.close()
                 self.send_redirect('/admin?msg=edited')
-            except sqlite3.OperationalError:
+            except Exception:
                 self.send_redirect('/admin')
 
         else:
