@@ -3,6 +3,15 @@ import sqlite3
 import urllib.parse
 import uuid
 import os
+import sys
+
+# Ensure the api/ directory is on the path so career_database can always be found
+sys.path.insert(0, os.path.dirname(__file__))
+
+try:
+    from career_database import CAREERS
+except ImportError:
+    CAREERS = []
 try:
     import libsql_experimental
     LIBSQL_AVAILABLE = True
@@ -485,7 +494,6 @@ class handler(http.server.BaseHTTPRequestHandler):
                 else:
                     level_msg = "<div class='alert alert-success' style='text-align:center;background:#f3e5f5;color:#4a148c;border-color:#e1bee7;'><strong>Qualification: Artisan Level</strong><br>You qualify for artisan-level practical skills programs.</div>"
 
-                from career_database import CAREERS
                 scored_careers = []
                 for c in CAREERS:
                     if education_goal and c['level'] != education_goal:
