@@ -1374,3 +1374,7 @@ main { width: 100%; }
 .rec-top-btn-primary { background:#3b82f6; color:#fff; border:none; padding:0.5rem 1rem; border-radius:8px; font-size:0.85rem; font-weight:600; cursor:pointer; font-family:var(--font-family); transition:var(--transition); }
 .rec-top-btn-primary:hover { background:#2563eb; }
 @media print { .rec-top-bar { display:none !important; } }
+
+/* Logo image in navbar */
+.nav-logo-img { height: 36px; width: auto; display: block; background: #fff; border-radius: 6px; padding: 2px 6px; }
+.navbar .logo { display: flex; align-items: center; }
