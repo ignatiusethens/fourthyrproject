@@ -12,7 +12,7 @@
     <a href="/" class="logo">
       <img src="/static/img/careerlogo.png" alt="Career & Guidance Portal" class="nav-logo-img">
     </a>
-    <ul class="nav-links">
+    <ul class="nav-links" id="nav-links">
       <li><a href="/">Home</a></li>
       <li><a href="/profile">Career Profiling</a></li>
       <li><a href="/scholarships">Scholarships</a></li>
@@ -22,6 +22,9 @@
     <div class="nav-actions">
       {{auth_links}}
     </div>
+    <button class="nav-hamburger" onclick="document.getElementById('nav-links').classList.toggle('open')" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
   </nav>
 
   <main>{{content}}</main>
