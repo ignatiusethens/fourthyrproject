@@ -100,8 +100,14 @@ def init_db():
             cur.execute("""CREATE TABLE IF NOT EXISTS scholarships (
                 id SERIAL PRIMARY KEY,
                 name TEXT, provider TEXT, description TEXT,
-                eligibility_criteria TEXT, deadline TEXT, link TEXT
+                eligibility_criteria TEXT, deadline TEXT, link TEXT,
+                category TEXT DEFAULT 'General', amount TEXT DEFAULT ''
             )""")
+            for col in ['category TEXT DEFAULT \'General\'', 'amount TEXT DEFAULT \'\'']:
+                try:
+                    cur.execute(f"ALTER TABLE scholarships ADD COLUMN {col}")
+                except Exception:
+                    pass
             conn.commit()
             cur.close()
         else:
@@ -130,8 +136,15 @@ def init_db():
             conn.execute("""CREATE TABLE IF NOT EXISTS scholarships (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT, provider TEXT, description TEXT,
-                eligibility_criteria TEXT, deadline TEXT, link TEXT
+                eligibility_criteria TEXT, deadline TEXT, link TEXT,
+                category TEXT DEFAULT 'General', amount TEXT DEFAULT ''
             )""")
+            # Migrate existing tables to add new columns
+            existing_cols = [row[1] for row in conn.execute("PRAGMA table_info(scholarships)").fetchall()]
+            if 'category' not in existing_cols:
+                conn.execute("ALTER TABLE scholarships ADD COLUMN category TEXT DEFAULT 'General'")
+            if 'amount' not in existing_cols:
+                conn.execute("ALTER TABLE scholarships ADD COLUMN amount TEXT DEFAULT ''")
             conn.commit()
         conn.close()
     except Exception:
@@ -140,6 +153,129 @@ def init_db():
 # Run on startup — wrapped so a DB error doesn't crash the whole app
 try:
     init_db()
+except Exception:
+    pass
+
+def seed_scholarships():
+    """Seed the scholarships table with well-known Kenyan funding opportunities if empty."""
+    SEED_DATA = [
+        {
+            'name': 'Higher Education Loans Board (HELB) Loan & Bursary',
+            'provider': 'Higher Education Loans Board (HELB)',
+            'description': 'Government-backed loans and bursaries for Kenyan students in accredited universities and TVET institutions. Covers tuition, accommodation, and upkeep. Bursary component is non-repayable for needy students.',
+            'eligibility_criteria': 'Kenyan citizen, admitted to a government-sponsored or self-sponsored programme at a recognised institution, demonstrated financial need',
+            'deadline': '2025-09-30',
+            'link': 'https://www.helb.co.ke',
+            'category': 'Government',
+            'amount': 'Up to KES 60,000/year (loan) + KES 8,000 bursary'
+        },
+        {
+            'name': 'HEFoND Bursary (Higher Education Financing for Needy and Deserving Students)',
+            'provider': 'Higher Education Financing for Needy and Deserving (HEFoND)',
+            'description': 'A government fund targeting needy and deserving students in public universities and TVET colleges. Provides non-repayable bursaries to bridge the gap left by HELB loans for the most vulnerable students.',
+            'eligibility_criteria': 'Kenyan citizen, enrolled in a public university or TVET, demonstrated financial need, household income below poverty line',
+            'deadline': '2025-10-31',
+            'link': 'https://www.hefond.go.ke',
+            'category': 'Government',
+            'amount': 'Up to KES 50,000/year (non-repayable)'
+        },
+        {
+            'name': 'NG-CDF Bursary (National Government Constituencies Development Fund)',
+            'provider': 'NG-CDF – Constituency Office',
+            'description': 'Bursaries disbursed at constituency level to support secondary and tertiary students from low-income families. Each of Kenya\'s 290 constituencies allocates a portion of its NG-CDF budget to education bursaries.',
+            'eligibility_criteria': 'Kenyan citizen, resident in the constituency, enrolled in secondary school, college, or university, demonstrated financial need',
+            'deadline': '2025-08-31',
+            'link': 'https://ngcdf.go.ke',
+            'category': 'Government',
+            'amount': 'KES 5,000 – KES 30,000 (varies by constituency)'
+        },
+        {
+            'name': 'Equity Wings to Fly Scholarship',
+            'provider': 'Equity Group Foundation',
+            'description': 'A comprehensive scholarship covering full secondary school fees, mentorship, leadership training, and university placement support. One of Kenya\'s most prestigious merit-and-need scholarships for Form 1 entry.',
+            'eligibility_criteria': 'Kenyan citizen, KCPE score of 350+ (or equivalent), joining Form 1 in a national or extra-county school, household income below KES 100,000/year',
+            'deadline': '2026-02-28',
+            'link': 'https://equitygroupfoundation.com/wings-to-fly',
+            'category': 'Private',
+            'amount': 'Full secondary school fees + stipend'
+        },
+        {
+            'name': 'KCB Foundation Scholarship',
+            'provider': 'KCB Foundation',
+            'description': 'Supports talented but financially disadvantaged Kenyan students pursuing university education in priority fields including STEM, business, and social sciences. Includes mentorship and internship opportunities within the KCB Group.',
+            'eligibility_criteria': 'Kenyan citizen, admitted to a public university, KCSE mean grade of B+ or above, demonstrated financial need, aged 18–25',
+            'deadline': '2025-11-30',
+            'link': 'https://kcbgroup.com/foundation/scholarships',
+            'category': 'Private',
+            'amount': 'Up to KES 100,000/year'
+        },
+        {
+            'name': 'Mastercard Foundation Scholars Program',
+            'provider': 'Mastercard Foundation / Various Partner Universities',
+            'description': 'Full scholarships for academically talented yet economically disadvantaged African students to study at leading African and global universities. Includes leadership development, mentorship, and internship placements.',
+            'eligibility_criteria': 'African citizen, demonstrated academic excellence, financial need, commitment to giving back to community, admitted to a partner university',
+            'deadline': '2026-03-31',
+            'link': 'https://mastercardfdn.org/all/scholars',
+            'category': 'International',
+            'amount': 'Full tuition, accommodation, living stipend, travel'
+        },
+        {
+            'name': 'Kenya Government Presidential Scholarship',
+            'provider': 'Ministry of Education, Kenya',
+            'description': 'Prestigious government scholarships for top-performing Kenyan students to pursue undergraduate and postgraduate studies at leading universities locally and abroad. Awarded based on KCSE performance.',
+            'eligibility_criteria': 'Kenyan citizen, KCSE grade A (plain) or equivalent, admitted to a recognised university, strong academic record',
+            'deadline': '2025-07-31',
+            'link': 'https://www.education.go.ke',
+            'category': 'Government',
+            'amount': 'Full tuition + living allowance'
+        },
+        {
+            'name': 'CDF Bursary – County Government',
+            'provider': 'County Government (varies by county)',
+            'description': 'County-level bursaries for students from needy families pursuing secondary, TVET, or university education. Application is made through the county education office or ward administrator.',
+            'eligibility_criteria': 'Resident of the county, enrolled in an accredited institution, demonstrated financial need, recommendation from local administration',
+            'deadline': '2025-09-30',
+            'link': 'https://www.cra.go.ke',
+            'category': 'Government',
+            'amount': 'KES 5,000 – KES 25,000 (varies by county)'
+        },
+        {
+            'name': 'Safaricom Foundation Scholarship',
+            'provider': 'Safaricom Foundation',
+            'description': 'Supports bright students from disadvantaged backgrounds pursuing university education in STEM and business-related fields. Includes mentorship and potential internship at Safaricom.',
+            'eligibility_criteria': 'Kenyan citizen, admitted to a public university, KCSE B+ or above, financial need, interest in technology or business',
+            'deadline': '2025-10-15',
+            'link': 'https://www.safaricomfoundation.org',
+            'category': 'Private',
+            'amount': 'Up to KES 80,000/year'
+        },
+        {
+            'name': 'USAID Kenya Scholarship Programs',
+            'provider': 'USAID Kenya',
+            'description': 'Various scholarship and exchange programmes funded by USAID supporting Kenyan students in fields aligned with development priorities including health, agriculture, education, and governance.',
+            'eligibility_criteria': 'Kenyan citizen, strong academic record, demonstrated community involvement, specific criteria vary by programme',
+            'deadline': '2026-01-31',
+            'link': 'https://www.usaid.gov/kenya',
+            'category': 'International',
+            'amount': 'Varies by programme'
+        },
+    ]
+    try:
+        conn = get_db_connection()
+        count = db_fetchone(conn, "SELECT COUNT(id) as c FROM scholarships")
+        if count and count['c'] == 0:
+            for s in SEED_DATA:
+                db_execute(conn, f"""INSERT INTO scholarships
+                    (name, provider, description, eligibility_criteria, deadline, link, category, amount)
+                    VALUES ({ph()},{ph()},{ph()},{ph()},{ph()},{ph()},{ph()},{ph()})""",
+                    (s['name'], s['provider'], s['description'], s['eligibility_criteria'],
+                     s['deadline'], s['link'], s['category'], s['amount']))
+        conn.close()
+    except Exception:
+        pass
+
+try:
+    seed_scholarships()
 except Exception:
     pass
 
@@ -681,33 +817,73 @@ GMAIL_APP_PASSWORD = {gmail_pass}
 
         elif path == '/scholarships':
             search = query.get('q', [''])[0]
+            category = query.get('cat', [''])[0]
             try:
                 conn = get_db_connection()
+                conditions = []
+                params = []
                 if search:
-                    rows = db_query(conn, f"SELECT * FROM scholarships WHERE name LIKE {ph()} OR description LIKE {ph()}",
-                                    (f'%{search}%', f'%{search}%'))
-                else:
-                    rows = db_query(conn, "SELECT * FROM scholarships")
+                    conditions.append(f"(name LIKE {ph()} OR description LIKE {ph()} OR provider LIKE {ph()} OR eligibility_criteria LIKE {ph()})")
+                    params += [f'%{search}%', f'%{search}%', f'%{search}%', f'%{search}%']
+                if category:
+                    conditions.append(f"category = {ph()}")
+                    params.append(category)
+                where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+                rows = db_query(conn, f"SELECT * FROM scholarships {where} ORDER BY id", tuple(params))
+                # Fetch distinct categories for filter pills
+                cats = db_query(conn, "SELECT DISTINCT category FROM scholarships ORDER BY category")
                 conn.close()
             except Exception:
                 rows = []
+                cats = []
 
-            s_html = "".join(f"""
-                <div class="card card-red">
-                    <h3>{s['name']}</h3>
-                    <p><strong>Provider:</strong> {s['provider']}</p>
-                    <p>{s['description']}</p>
-                    <p><small>Deadline: {s['deadline']}</small></p>
-                    <a href="{s['link']}" target="_blank" class="btn-primary"
-                       style="margin-top:1rem;padding:0.5rem 1rem;">Apply Now &rarr;</a>
-                </div>""" for s in rows)
+            cat_list = [c['category'] for c in cats if c.get('category')]
+
+            # Category filter pills
+            pills_html = f'<a href="/scholarships" class="filter-pill {"filter-pill-active" if not category else ""}">All</a>'
+            for c in cat_list:
+                active = 'filter-pill-active' if c == category else ''
+                q_part = f'?cat={urllib.parse.quote(c)}' + (f'&q={urllib.parse.quote(search)}' if search else '')
+                pills_html += f'<a href="/scholarships{q_part}" class="filter-pill {active}">{c}</a>'
+
+            CATEGORY_ICONS = {'Government': '🏛️', 'Private': '🏢', 'International': '🌍', 'General': '📋'}
+
+            def scholarship_card(s):
+                icon = CATEGORY_ICONS.get(s.get('category', 'General'), '📋')
+                amount_html = f'<div class="schol-amount">💰 {s["amount"]}</div>' if s.get('amount') else ''
+                deadline_html = f'<div class="schol-deadline">📅 Deadline: {s["deadline"]}</div>' if s.get('deadline') else ''
+                return f"""
+                <div class="schol-card">
+                    <div class="schol-card-header">
+                        <span class="schol-icon">{icon}</span>
+                        <span class="schol-category-badge">{s.get('category','General')}</span>
+                    </div>
+                    <h3 class="schol-title">{s['name']}</h3>
+                    <p class="schol-provider">by {s['provider']}</p>
+                    <p class="schol-desc">{s['description']}</p>
+                    <div class="schol-meta">
+                        {amount_html}
+                        {deadline_html}
+                    </div>
+                    <div class="schol-eligibility">
+                        <strong>Eligibility:</strong> {s.get('eligibility_criteria','')}
+                    </div>
+                    <a href="{s['link']}" target="_blank" rel="noopener" class="btn-primary schol-btn">Apply / Learn More &rarr;</a>
+                </div>"""
+
+            s_html = "".join(scholarship_card(s) for s in rows)
             if not rows:
-                s_html = "<p style='grid-column:1/-1;text-align:center;'>No scholarships found.</p>"
+                s_html = "<div class='schol-empty'><p>No scholarships found matching your search.</p><a href='/scholarships' class='btn-secondary' style='margin-top:1rem;display:inline-block;'>Clear filters</a></div>"
 
             self.send_html(self.render_template('scholarships.html', {
-                'title': 'Scholarships',
+                'title': 'Scholarships & Bursaries',
                 'scholarships_list': s_html,
-                'search_query': search
+                'search_query': search,
+                'filter_pills': pills_html,
+                'result_count': str(len(rows)),
+                'result_count_plural': 'y' if len(rows) == 1 else 'ies',
+                'active_category': category,
+                'clear_link': f'<a href="/scholarships" style="font-size:0.85rem;color:var(--color-red);">Clear filters</a>' if (search or category) else '',
             }))
 
         elif path == '/admin':
@@ -785,7 +961,12 @@ GMAIL_APP_PASSWORD = {gmail_pass}
                     'title': 'Edit Scholarship',
                     'id': s['id'], 'name': s['name'], 'provider': s['provider'],
                     'description': s['description'], 'eligibility_criteria': s['eligibility_criteria'],
-                    'deadline': s['deadline'], 'link': s['link']
+                    'deadline': s['deadline'], 'link': s['link'],
+                    'category': s.get('category', 'General'), 'amount': s.get('amount', ''),
+                    'cat_gov':  'selected' if s.get('category') == 'Government'    else '',
+                    'cat_priv': 'selected' if s.get('category') == 'Private'       else '',
+                    'cat_intl': 'selected' if s.get('category') == 'International' else '',
+                    'cat_gen':  'selected' if s.get('category', 'General') == 'General' else '',
                 }))
             except sqlite3.OperationalError:
                 self.send_redirect('/admin')
@@ -1128,10 +1309,11 @@ GMAIL_APP_PASSWORD = {gmail_pass}
                 return self.send_error(403, "Forbidden")
             try:
                 conn = get_db_connection()
-                db_execute(conn, f"""INSERT INTO scholarships (name, provider, description, eligibility_criteria, deadline, link)
-                                VALUES ({ph()},{ph()},{ph()},{ph()},{ph()},{ph()})""",
+                db_execute(conn, f"""INSERT INTO scholarships (name, provider, description, eligibility_criteria, deadline, link, category, amount)
+                                VALUES ({ph()},{ph()},{ph()},{ph()},{ph()},{ph()},{ph()},{ph()})""",
                              (get_val('name'), get_val('provider'), get_val('description'),
-                              get_val('eligibility_criteria'), get_val('deadline'), get_val('link')))
+                              get_val('eligibility_criteria'), get_val('deadline'), get_val('link'),
+                              get_val('category') or 'General', get_val('amount')))
                 conn.close()
                 self.send_redirect('/admin?msg=added')
             except Exception:
@@ -1147,10 +1329,11 @@ GMAIL_APP_PASSWORD = {gmail_pass}
             try:
                 conn = get_db_connection()
                 db_execute(conn, f"""UPDATE scholarships
-                                SET name={ph()}, provider={ph()}, description={ph()}, eligibility_criteria={ph()}, deadline={ph()}, link={ph()}
+                                SET name={ph()}, provider={ph()}, description={ph()}, eligibility_criteria={ph()}, deadline={ph()}, link={ph()}, category={ph()}, amount={ph()}
                                 WHERE id={ph()}""",
                              (get_val('name'), get_val('provider'), get_val('description'),
-                              get_val('eligibility_criteria'), get_val('deadline'), get_val('link'), s_id))
+                              get_val('eligibility_criteria'), get_val('deadline'), get_val('link'),
+                              get_val('category') or 'General', get_val('amount'), s_id))
                 conn.close()
                 self.send_redirect('/admin?msg=edited')
             except Exception:

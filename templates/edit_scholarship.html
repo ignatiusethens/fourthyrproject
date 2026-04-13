@@ -29,6 +29,19 @@
             <label>Link</label>
             <input type="url" name="link" value="{{link}}" required>
         </div>
+        <div class="form-group">
+            <label>Category</label>
+            <select name="category">
+                <option value="Government" {{cat_gov}}>Government</option>
+                <option value="Private" {{cat_priv}}>Private</option>
+                <option value="International" {{cat_intl}}>International</option>
+                <option value="General" {{cat_gen}}>General</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Amount / Value</label>
+            <input type="text" name="amount" value="{{amount}}" placeholder="e.g. Up to KES 50,000/year">
+        </div>
         <button type="submit" class="btn-primary" style="width: 100%;">Update Scholarship</button>
         <div style="text-align: center; margin-top: 1rem;">
             <a href="/admin" class="btn-secondary" style="border-color: #333; color: #333; padding: 0.5rem 1rem;">Cancel</a>
