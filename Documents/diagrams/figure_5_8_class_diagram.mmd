@@ -1,0 +1,63 @@
+---
+title: "Figure 5.8: Class Diagram of the Portal's Python Handler and Module-Level Functions"
+---
+classDiagram
+    class BaseHTTPRequestHandler {
+        <<http.server>>
+        +handle()
+        +send_response()
+        +send_header()
+        +end_headers()
+    }
+
+    class handler {
+        +do_GET()
+        +do_POST()
+        +_handle_post()
+        +get_current_user() dict
+        +render_template(name, context) str
+        +send_redirect(location)
+        +send_html(content, status)
+        +serve_static(path)
+    }
+
+    class ModuleFunctions {
+        <<module-level>>
+        +init_db()
+        +get_db_connection() connection
+        +hash_password(password) str
+        +generate_otp() str
+        +send_otp_email(email, otp)
+        +run_algorithm(profile_data) list
+    }
+
+    class GRADE_MAP {
+        <<constant>>
+        A : 12
+        A- : 11
+        B+ : 10
+        B : 9
+        B- : 8
+        C+ : 7
+        C : 6
+        C- : 5
+        D+ : 4
+        D : 3
+        D- : 2
+        E : 1
+    }
+
+    class CAREERS {
+        <<constant>>
+        name : str
+        min_grade : float
+        subjects : list
+        traits : dict
+        industries : list
+        level : str
+    }
+
+    BaseHTTPRequestHandler <|-- handler
+    handler ..> ModuleFunctions : uses
+    ModuleFunctions ..> GRADE_MAP : references
+    ModuleFunctions ..> CAREERS : references

@@ -1,0 +1,43 @@
+---
+title: "Figure 5.11: Entity-Relationship Diagram of the Portal Database"
+---
+erDiagram
+    users {
+        int id PK
+        string full_name
+        string email
+        string password
+        string role
+        string school
+        string phone
+        string study_areas
+        int is_verified
+        bigint created_at
+        string profile_data
+        string last_results
+    }
+
+    sessions {
+        string session_id PK
+        int user_id FK
+        bigint created_at
+    }
+
+    verification_tokens {
+        string token PK
+        int user_id FK
+        bigint expires_at
+    }
+
+    scholarships {
+        int id PK
+        string name
+        string provider
+        string description
+        string eligibility_criteria
+        string deadline
+        string link
+    }
+
+    users ||--o{ sessions : "has"
+    users ||--o{ verification_tokens : "has"

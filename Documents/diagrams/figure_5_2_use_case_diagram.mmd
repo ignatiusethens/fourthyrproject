@@ -1,0 +1,37 @@
+---
+title: "Figure 5.2: Use Case Diagram of the Proposed Career Guidance and Scholarship Portal"
+---
+flowchart LR
+    Learner(["👤 Learner\n(Form Four Leaver)"])
+    Admin(["👤 Administrator"])
+
+    subgraph Portal["Career Guidance and Scholarship Portal"]
+        UC1["Register Account"]
+        UC2["Verify Email (OTP)"]
+        UC3["Login"]
+        UC4["Forgot Password"]
+        UC5["Complete Career Profile\n(Steps 1–4)"]
+        UC6["View Career Recommendations"]
+        UC7["Search Scholarships"]
+        UC8["View Scholarship Details"]
+        UC9["Manage Scholarships\n(Add / Edit / Delete)"]
+        UC10["View Admin Dashboard"]
+        UC11["Manage Users"]
+        UC12["Logout"]
+    end
+
+    Learner --> UC1
+    Learner --> UC2
+    Learner --> UC3
+    Learner --> UC4
+    Learner --> UC5
+    Learner --> UC6
+    Learner --> UC7
+    Learner --> UC8
+    Learner --> UC12
+
+    Admin --> UC3
+    Admin --> UC9
+    Admin --> UC10
+    Admin --> UC11
+    Admin --> UC12

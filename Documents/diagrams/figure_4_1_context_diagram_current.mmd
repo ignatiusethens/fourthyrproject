@@ -1,0 +1,17 @@
+---
+title: "Figure 4.1: Context Diagram of the Current Manual Career Guidance System"
+---
+flowchart LR
+    Student(["Student\n(Form Four Leaver)"])
+    Counselor(["Career Counselor"])
+    KUCCPS(["KUCCPS"])
+    ScholarshipBodies(["Scholarship Bodies\n(HELB/HEFoND, NG-CDF)"])
+    ManualSystem["Manual Career\nGuidance System"]
+
+    Student -- "Academic grades,\npersonal interests" --> ManualSystem
+    ManualSystem -- "Career advice,\nprogramme suggestions" --> Student
+    Counselor -- "Guidance expertise,\ncounseling sessions" --> ManualSystem
+    ManualSystem -- "Student referrals,\nplacement queries" --> KUCCPS
+    KUCCPS -- "Cluster requirements,\ncut-off points" --> ManualSystem
+    ManualSystem -- "Scholarship inquiries" --> ScholarshipBodies
+    ScholarshipBodies -- "Eligibility criteria,\napplication info" --> ManualSystem

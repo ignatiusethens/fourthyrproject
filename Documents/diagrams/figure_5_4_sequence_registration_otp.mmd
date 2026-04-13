@@ -1,0 +1,38 @@
+---
+title: "Figure 5.4: Sequence Diagram — User Registration with OTP Email Verification"
+---
+sequenceDiagram
+    participant B as Browser
+    participant PH as PortalRequestHandler
+    participant DB as Database
+    participant SMTP as Gmail SMTP
+
+    B->>PH: GET /register
+    PH-->>B: Render register.html
+
+    B->>PH: POST /register (full_name, email, password, school, phone)
+    PH->>DB: SELECT * FROM users WHERE email = ?
+    DB-->>PH: No existing user
+
+    PH->>PH: hash_password(password) → SHA-256 digest
+    PH->>DB: INSERT INTO users (full_name, email, password, role, is_verified=0)
+    DB-->>PH: user_id
+
+    PH->>PH: generate_otp() → 6-digit OTP
+    PH->>DB: INSERT INTO verification_tokens (token, user_id, expires_at = now+600)
+    DB-->>PH: OK
+
+    PH->>SMTP: send_otp_email(email, otp) via smtplib.SMTP_SSL port 465
+    SMTP-->>PH: Email sent
+
+    PH-->>B: Redirect to /verify-otp
+
+    B->>PH: POST /verify-otp (otp_code)
+    PH->>DB: SELECT * FROM verification_tokens WHERE token = ? AND expires_at > now()
+    DB-->>PH: Valid token record
+
+    PH->>DB: UPDATE users SET is_verified = 1 WHERE id = user_id
+    PH->>DB: DELETE FROM verification_tokens WHERE token = ?
+    DB-->>PH: OK
+
+    PH-->>B: Redirect to /login

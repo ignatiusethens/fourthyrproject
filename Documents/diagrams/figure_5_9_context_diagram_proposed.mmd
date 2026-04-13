@@ -1,0 +1,27 @@
+---
+title: "Figure 5.9: Context Diagram of the Proposed Career Guidance and Scholarship Portal"
+---
+flowchart LR
+    Student(["Student\n(Form Four Leaver)"])
+    Admin(["Administrator"])
+    Gmail(["Gmail SMTP\n(External Email Service)"])
+    NeonDB(["Neon PostgreSQL\n(Cloud Database)"])
+    Vercel(["Vercel\n(Cloud Deployment)"])
+    KUCCPS(["KUCCPS\n(Reference Data Source)"])
+
+    Portal["Web-Based Career Guidance\nand Scholarship Portal\n(api/index.py)"]
+
+    Student -- "Registration, login,\nprofile data, search queries" --> Portal
+    Portal -- "Career recommendations,\nscholarship results, OTP emails" --> Student
+
+    Admin -- "Login credentials,\nscholarship CRUD operations" --> Portal
+    Portal -- "Dashboard data,\nmanagement confirmations" --> Admin
+
+    Portal -- "OTP email requests" --> Gmail
+    Gmail -- "Email delivery status" --> Portal
+
+    Portal -- "SQL queries (pg8000)" --> NeonDB
+    NeonDB -- "Query results,\nrecordsets" --> Portal
+
+    Portal --> Vercel
+    KUCCPS -- "Cluster requirements,\ncut-off reference data" --> Portal

@@ -1,0 +1,39 @@
+---
+title: "Figure 5.7: Sequence Diagram — Admin Scholarship Management"
+---
+sequenceDiagram
+    participant AB as AdminBrowser
+    participant PH as PortalRequestHandler
+    participant DB as Database
+
+    AB->>PH: GET /admin/login
+    PH-->>AB: Render admin_login.html
+
+    AB->>PH: POST /admin/login (username, password)
+    PH->>PH: Verify admin credentials
+    PH-->>AB: Set admin session cookie, Redirect to /admin
+
+    AB->>PH: GET /admin
+    PH->>DB: SELECT * FROM scholarships
+    DB-->>PH: All scholarship records
+    PH-->>AB: Render admin.html (dashboard with scholarship list)
+
+    AB->>PH: POST /admin/add_scholarship (name, provider, description, eligibility_criteria, deadline, link)
+    PH->>DB: INSERT INTO scholarships (name, provider, description, eligibility_criteria, deadline, link)
+    DB-->>PH: OK
+    PH-->>AB: Redirect to /admin?msg=added
+
+    AB->>PH: GET /admin/edit_scholarship?id=5
+    PH->>DB: SELECT * FROM scholarships WHERE id = 5
+    DB-->>PH: Scholarship record
+    PH-->>AB: Render edit_scholarship.html (pre-filled form)
+
+    AB->>PH: POST /admin/edit_scholarship (id=5, updated fields)
+    PH->>DB: UPDATE scholarships SET ... WHERE id = 5
+    DB-->>PH: OK
+    PH-->>AB: Redirect to /admin?msg=updated
+
+    AB->>PH: POST /admin/delete_scholarship (id=5)
+    PH->>DB: DELETE FROM scholarships WHERE id = 5
+    DB-->>PH: OK
+    PH-->>AB: Redirect to /admin?msg=deleted

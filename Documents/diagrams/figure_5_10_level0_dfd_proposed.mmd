@@ -1,0 +1,41 @@
+---
+title: "Figure 5.10: Level-0 Data Flow Diagram of the Proposed Portal"
+---
+flowchart TD
+    Student(["Student"])
+    Admin(["Administrator"])
+    Gmail(["Gmail SMTP"])
+    KUCCPS(["KUCCPS Reference"])
+
+    P1["1.0\nUser Authentication\n(Register / Login / OTP)"]
+    P2["2.0\nCareer Profiling\n(Steps 1–4 Data Collection)"]
+    P3["3.0\nRecommendation Engine\n(run_algorithm)"]
+    P4["4.0\nScholarship Repository\n(Search & Display)"]
+    P5["5.0\nAdmin Management\n(Dashboard & CRUD)"]
+
+    DS1[("D1: users")]
+    DS2[("D2: sessions")]
+    DS3[("D3: verification_tokens")]
+    DS4[("D4: scholarships")]
+
+    Student -- "Registration data,\nlogin credentials" --> P1
+    P1 -- "Verified session cookie" --> Student
+    P1 -- "OTP request" --> Gmail
+    P1 --> DS1
+    P1 --> DS2
+    P1 --> DS3
+
+    Student -- "Grade data, skills,\npreferences (Steps 1–3)" --> P2
+    P2 -- "Assembled profile_data" --> P3
+    KUCCPS -- "Grade thresholds,\ncluster data" --> P3
+    P3 -- "Top 8 career matches\nwith match_pct" --> Student
+    P3 --> DS1
+
+    Student -- "Search keyword" --> P4
+    DS4 -- "Scholarship records" --> P4
+    P4 -- "Filtered scholarship list" --> Student
+
+    Admin -- "Scholarship data,\nmanagement actions" --> P5
+    P5 --> DS4
+    P5 -- "Dashboard statistics" --> Admin
+    DS1 -- "User records" --> P5

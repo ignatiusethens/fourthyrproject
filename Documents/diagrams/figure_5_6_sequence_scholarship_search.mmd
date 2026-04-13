@@ -1,0 +1,22 @@
+---
+title: "Figure 5.6: Sequence Diagram — Scholarship Search and Retrieval"
+---
+sequenceDiagram
+    participant B as Browser
+    participant PH as PortalRequestHandler
+    participant DB as Database
+
+    B->>PH: GET /scholarships
+    PH->>DB: SELECT * FROM scholarships ORDER BY id DESC
+    DB-->>PH: All scholarship records
+    PH-->>B: Render scholarships.html (full list)
+
+    B->>PH: GET /scholarships?q=engineering
+    PH->>DB: SELECT * FROM scholarships WHERE name LIKE '%engineering%' OR description LIKE '%engineering%' OR provider LIKE '%engineering%'
+    DB-->>PH: Matching scholarship records
+    PH-->>B: Render scholarships.html (filtered results)
+
+    B->>PH: GET /scholarships?q=helb
+    PH->>DB: SELECT * FROM scholarships WHERE name LIKE '%helb%' OR description LIKE '%helb%' OR provider LIKE '%helb%'
+    DB-->>PH: Matching scholarship records
+    PH-->>B: Render scholarships.html (filtered results)

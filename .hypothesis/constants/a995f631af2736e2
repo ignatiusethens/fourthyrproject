@@ -1,0 +1,4 @@
+# file: /Users/ethens/Documents/Fourth Year Project/api/career_database.py
+# hypothesis_version: 6.151.12
+
+[0.0, 5.0, 7.0, 8.0, 9.0, 10.0, 'AI', 'Agriculture', 'Building', 'Business', 'Certificate', 'Coding', 'Content', 'Creative', 'Cyber', 'Degree', 'Diploma', 'Ecommerce', 'EdTech', 'Energy', 'Engineering', 'Environment', 'Fintech', 'Flexibility', 'Healthcare', 'Helping', 'Independent', 'Laboratory', 'Law', 'Leading', 'Mechanical', 'Media', 'Office', 'Outdoors', 'Passion', 'Remote', 'Research', 'Security', 'SocialWork', 'Talk', 'Team', 'Tourism', 'Trading', 'Travel', 'Volunteering', 'Wealth', 'biology_grade', 'chemistry_grade', 'english_grade', 'humanities_grade', 'industries', 'kiswahili_grade', 'level', 'math_grade', 'min_grade', 'name', 'physics_grade', 'subjects', 'traits']

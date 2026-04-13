@@ -1,0 +1,31 @@
+---
+title: "Figure 5.3: Activity Diagram for the Multi-Step Career Profiling Workflow"
+---
+flowchart TD
+    Start(["Start"])
+    A["User logs in\nto portal"]
+    B["Navigate to\nCareer Profiling"]
+    C["Step 1: Enter KCSE\nAcademic Grades\n(7 subjects)"]
+    D{"Grades\nsubmitted?"}
+    E["Step 2: Rate\nPersonal Skills\n(7 skill ratings 1–5)"]
+    F{"Skills\nsubmitted?"}
+    G["Step 3: Set\nCareer Preferences\n(work environment, industries,\nbudget, education goal)"]
+    H{"Preferences\nsubmitted?"}
+    I["Step 4: Review\nProfile Summary"]
+    J{"Confirm\nsubmission?"}
+    K["POST /profile/submit\nAssemble profile_data from cookies"]
+    L["run_algorithm(profile_data)\nCompute subject_score +\ntrait_score + industry_score"]
+    M["Normalise scores\nto match percentages\nTop 8 careers selected"]
+    N["UPDATE users SET\nlast_results, profile_data"]
+    O["Render recommendations.html\nDisplay top career matches"]
+    End(["End"])
+
+    Start --> A --> B --> C --> D
+    D -- "No" --> C
+    D -- "Yes" --> E --> F
+    F -- "No" --> E
+    F -- "Yes" --> G --> H
+    H -- "No" --> G
+    H -- "Yes" --> I --> J
+    J -- "Edit" --> C
+    J -- "Confirm" --> K --> L --> M --> N --> O --> End

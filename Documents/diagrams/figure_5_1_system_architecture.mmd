@@ -1,0 +1,39 @@
+---
+title: "Figure 5.1: Three-Tier System Architecture Diagram of the Proposed Portal"
+---
+flowchart TD
+    subgraph PL["Presentation Layer (Client)"]
+        HTML["HTML5 Templates\n(Jinja2-style rendering)"]
+        CSS["CSS3 Stylesheet\n(static/style.css)"]
+        JS["Vanilla JavaScript\n(form validation, UI logic)"]
+    end
+
+    subgraph AL["Application Layer (Server)"]
+        Handler["PortalRequestHandler\n(http.server.BaseHTTPRequestHandler)"]
+        Algorithm["run_algorithm()\nWeighted Scoring Engine"]
+        Auth["Authentication Module\n(SHA-256 hashing, OTP, sessions)"]
+        Email["Email Module\n(smtplib, Gmail SMTP SSL port 465)"]
+    end
+
+    subgraph DL["Data Layer (Database)"]
+        SQLite["SQLite\n(Local Development)"]
+        PostgreSQL["PostgreSQL via Neon\n(Production — pg8000 driver)"]
+    end
+
+    subgraph EX["External Services"]
+        Vercel["Vercel Cloud\n(Serverless Deployment)"]
+        Gmail["Gmail SMTP\n(OTP Email Delivery)"]
+    end
+
+    HTML <--> Handler
+    CSS --> HTML
+    JS --> HTML
+    Handler --> Algorithm
+    Handler --> Auth
+    Handler --> Email
+    Auth --> SQLite
+    Auth --> PostgreSQL
+    Algorithm --> SQLite
+    Algorithm --> PostgreSQL
+    Email --> Gmail
+    Handler --> Vercel

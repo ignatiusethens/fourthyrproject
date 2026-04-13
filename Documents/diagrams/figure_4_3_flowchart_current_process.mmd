@@ -1,0 +1,34 @@
+---
+title: "Figure 4.3: Flowchart of the Current Manual Career Guidance Process"
+---
+flowchart TD
+    Start(["Start"])
+    A["Student completes\nForm Four / KCSE"]
+    B["Student visits school\nor career counselor"]
+    C{"Counselor\navailable?"}
+    D["Student waits for\nscheduled appointment"]
+    E["Student presents\nKCSE results"]
+    F["Counselor manually\nassesses grades"]
+    G["Counselor consults\nreference materials"]
+    H{"Grade threshold\nmet for university?"}
+    I["Counselor advises\nuniversity pathways\nvia KUCCPS"]
+    J["Counselor advises\nTVET / diploma\npathways"]
+    K["Student inquires\nabout scholarships"]
+    L{"Counselor has\nscholarship info?"}
+    M["Counselor refers student\nto HELB/HEFoND,\nNG-CDF offices"]
+    N["Counselor provides\nscholarship brochures\nor verbal guidance"]
+    O["Student manually\ncollects application forms"]
+    P["Student submits\napplications independently"]
+    End(["End"])
+
+    Start --> A --> B --> C
+    C -- "No" --> D --> B
+    C -- "Yes" --> E --> F --> G --> H
+    H -- "Yes" --> I
+    H -- "No" --> J
+    I --> K
+    J --> K
+    K --> L
+    L -- "No" --> M --> O
+    L -- "Yes" --> N --> O
+    O --> P --> End

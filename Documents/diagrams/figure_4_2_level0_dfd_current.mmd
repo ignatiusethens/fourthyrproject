@@ -1,0 +1,29 @@
+---
+title: "Figure 4.2: Level-0 Data Flow Diagram of the Current Manual Career Guidance System"
+---
+flowchart TD
+    Student(["Student"])
+    Counselor(["Career Counselor"])
+    KUCCPS(["KUCCPS"])
+    ScholarshipBodies(["Scholarship Bodies"])
+
+    P1["1.0\nGrade Collection\n& Assessment"]
+    P2["2.0\nCareer Advice\n& Profiling"]
+    P3["3.0\nScholarship\nReferral"]
+
+    DS1[("D1: Student\nRecords")]
+    DS2[("D2: Career\nReference Materials")]
+    DS3[("D3: Scholarship\nBrochures")]
+
+    Student -- "KCSE grades,\npersonal details" --> P1
+    P1 -- "Assessed grade profile" --> DS1
+    DS1 -- "Student grade data" --> P2
+    Counselor -- "Career knowledge,\nguidance expertise" --> P2
+    DS2 -- "Career programme info" --> P2
+    P2 -- "Career recommendations" --> Student
+    P2 -- "Placement query" --> KUCCPS
+    KUCCPS -- "Programme requirements" --> P2
+    P2 -- "Scholarship referral request" --> P3
+    DS3 -- "Scholarship details" --> P3
+    ScholarshipBodies -- "Funding information" --> P3
+    P3 -- "Scholarship options" --> Student

@@ -1,0 +1,44 @@
+---
+title: "Figure 5.5: Sequence Diagram — Multi-Step Career Profiling and Algorithm Execution"
+---
+sequenceDiagram
+    participant B as Browser
+    participant PH as PortalRequestHandler
+    participant CK as Cookie Store
+    participant RA as run_algorithm
+    participant DB as Database
+
+    B->>PH: GET /profile/step1
+    PH-->>B: Render profile_step1.html
+
+    B->>PH: POST /profile/step1 (math_grade, english_grade, ... 7 grades)
+    PH->>CK: Set-Cookie: step1_data = JSON(grades)
+    PH-->>B: Redirect to /profile/step2
+
+    B->>PH: GET /profile/step2
+    PH-->>B: Render profile_step2.html
+
+    B->>PH: POST /profile/step2 (problem_solving, rating_analytical, ... 7 ratings)
+    PH->>CK: Set-Cookie: step2_data = JSON(skills)
+    PH-->>B: Redirect to /profile/step3
+
+    B->>PH: GET /profile/step3
+    PH-->>B: Render profile_step3.html
+
+    B->>PH: POST /profile/step3 (work_environment, industry_interests, budget, ...)
+    PH->>CK: Set-Cookie: step3_data = JSON(preferences)
+    PH-->>B: Redirect to /profile/step4
+
+    B->>PH: GET /profile/step4
+    PH->>CK: Read step1_data, step2_data, step3_data
+    PH-->>B: Render profile_step4.html (review summary)
+
+    B->>PH: POST /profile/submit
+    PH->>CK: Read step1_data + step2_data + step3_data
+    PH->>RA: run_algorithm(profile_data)
+    RA-->>PH: Top 8 career matches with match_pct
+
+    PH->>DB: UPDATE users SET last_results = JSON(results), profile_data = JSON(profile)
+    DB-->>PH: OK
+
+    PH-->>B: Render recommendations.html (top career matches)
